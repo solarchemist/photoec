@@ -1,3 +1,6 @@
+source("/home/taha/chepec/chetex/common/R/sunlight/solarconstants.R")
+source("/home/taha/chepec/chetex/common/R/common/trapz.R")
+
 sunlight.Planck <- function(wavelength, temperature = 5778) {
    #' @title Calculate the spectral radiance and other sunlight characteristics based on Planck's law
    #'
@@ -18,9 +21,6 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
    
    # Throw error if wavelength contains any values <= 0
    # Throw error if temperature is T <= 0
-   
-   source("/home/taha/chepec/chetex/common/R/sunlight/solarconstants.R")
-   source("/home/taha/chepec/chetex/common/R/common/trapz.R")
    
    sun.constants <- solar.constants()
    

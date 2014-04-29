@@ -1,5 +1,8 @@
-solar.constants <- function() {
-
+solar.constants <- function(dummy = "") {
+   # This function takes no input.
+   # It simply returns a preset dataframe with values, units, etc. for various
+   # useful solar-related constants.
+   # 
    solar.constants <- 
       structure(list(name = c("Speed of light", 
                               "Elementary charge", 
@@ -46,17 +49,21 @@ solar.constants <- function() {
                               "\\si{\\metre}",
                               "\\si{\\metre}"), 
                      reference = c("per definition", 
-                              "", 
-                              "", 
-                              "", 
-                              "", 
-                              "", 
-                              "", 
-                              "", 
-                              "", 
-                              "",
-                              "A = 4 * pi * R.Earth^2")), 
-                .Names = c("name", "symbol", "value", "unit", "reference"), 
+                                   "", 
+                                   "", 
+                                   "", 
+                                   "",
+                                   "", 
+                                   "", 
+                                   "", 
+                                   "", 
+                                   "",
+                                   "A = 4 * pi * R.Earth^2")), 
+                .Names = c("name", 
+                           "symbol", 
+                           "value", 
+                           "unit", 
+                           "reference"), 
                 row.names = c("c",        # Speed of light 
                               "e",        # Elementary charge 
                               "h",        # Planck's constant 
@@ -69,5 +76,8 @@ solar.constants <- function() {
                               "R.Earth",  # Radius of the Earth
                               "A.Earth"), # Surface area of the Earth
                 class = "data.frame")
-   
+   #
+   return(solar.constants)
 }
+
+
