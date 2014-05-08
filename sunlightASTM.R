@@ -1,4 +1,5 @@
 source("/home/taha/chepec/chetex/common/R/common/trapz.R")
+source("/home/taha/chepec/chetex/common/R/common/nm2eV.R")
 
 sunlight.ASTM <- 
    function(wavelength = c(seq(280, 400, 0.5), seq(401, 1700, 1), 
@@ -19,20 +20,27 @@ sunlight.ASTM <-
    #'
    #' @param wavelength: vector of wavelengths / nm
    #'        Defaults to the wavelength values used in the G173-03 model
+   #' @param model: "", or "AM1.5G", or "AM0", or "DNCS"
+   #'        If "", returns data for all three models, otherwise returns
+   #'        data only for the requested model
+   #'         
    #' @examples
    #' sunlight.ASTM(wavelength = seq(400, 450, by = 0.1), model = "AM1.5G")
    #' @author Taha Ahmed <taha@@chepec.se>
    #' @return NOTE: which columns returned depends on model = ...
-   #' @return wavelength                     / nm
-   #' @return AM0.spectralradiance           / W m-2 nm-1
-   #' @return AM1.5G.spectralradiance        / W m-2 nm-1
-   #' @return DNCS.spectralradiance          / W m-2 nm-1
-   #' @return AM0.spectralradiance.trapz     / W m-2
-   #' @return AM1.5G.spectralradiance.trapz  / W m-2
-   #' @return DNCS.spectralradiance.trapz    / W m-2
-   #' @return AM0.radiance                   / W m-2
-   #' @return AM1.5G.radiance                / W m-2
-   #' @return DNCS.radiance                  / W m-2
+   #' @return wavelength                       / nm
+   #' @return AM0.spectralirradiance           / W m-2 nm-1
+   #' @return AM1.5G.spectralirradiance        / W m-2 nm-1
+   #' @return DNCS.spectralirradiance          / W m-2 nm-1
+   #' @return AM0.spectralirradiance.trapz     / W m-2
+   #' @return AM1.5G.spectralirradiance.trapz  / W m-2
+   #' @return DNCS.spectralirradiance.trapz    / W m-2
+   #' @return AM0.irradiance                   / W m-2
+   #' @return AM1.5G.irradiance                / W m-2
+   #' @return DNCS.irradiance                  / W m-2
+   #' @return AM0.irradiance.fraction          / 1
+   #' @return AM1.5G.irradiance.fraction       / 1
+   #' @return DNCS.irradiance.fraction         / 1
    
    #### Check args
    # Check that wavelength limits lies within 280 nm and 4000 nm
@@ -49,11 +57,15 @@ sunlight.ASTM <-
                  header = T, 
                  sep = ",", 
                  dec = ".",
-                 col.names = c("wavelength", "AM0", "AM1.5G", "DNCS"))
+                 col.names = 
+                    c("wavelength", 
+                      "AM0", 
+                      "AM1.5G", 
+                      "DNCS"))
    ## Description of ASTMG173.csv columns
    # name        description                                  unit
    # ====        =================                            =================
-   # wavelength  wavelength (280 nm - 4000 nm, 0.5 nm step)   /(m)
+   # wavelength  wavelength (280 nm - 4000 nm, 0.5 nm step)   /(nm)
    # AM0         AM0 reference spectrum                       /(W * m-2 * nm-1)
    # AM1.5G      AM1.5 global tilt reference spectrum         /(W * m-2 * nm-1)
    # DNCS        direct normal circumsolar reference spectrum /(W * m-2 * nm-1)
@@ -120,14 +132,13 @@ sunlight.ASTM <-
    # Rename columns (in accordance with sunlight.Planck() terminology)
    names(astm[["interp"]])[2:length(astm[["interp"]])] <-
       paste0(names(astm[["interp"]])[2:length(astm[["interp"]])], 
-             ".spectralradiance")
-   
+             ".spectralirradiance")
    
    # So now we have spectral radiances according to AM0, AM1.5G and DNCS.
    # We will now calculate integrated spectral radiance and radiance
    # (compare with sunlight.Planck() function).
    
-   # calculate spectralradiance.trapz and assign to new columns
+   # calculate spectralirradiance.trapz and assign to new columns
    for (k in 2:dim(astm[["interp"]])[2]) {
       astm[["interp"]] <- 
          cbind(astm[["interp"]], 
@@ -137,59 +148,85 @@ sunlight.ASTM <-
    }
    
    
-   # calculate radiance and assign to three new columns
+   # calculate irradiance and assign to three new columns
    for (k in 5:dim(astm[["interp"]])[2]) {
-      astm[["interp"]] <- 
-         cbind(astm[["interp"]], 
-               cumsum(c(0, trapz(astm[["interp"]]$wavelength, 
-                                 astm[["interp"]][, k]))))
+      irradiance <- rep(0, dim(astm[["interp"]])[1])
+      for (j in 2:dim(astm[["interp"]])[1]) {
+         irradiance[j] <- irradiance[j - 1] + astm[["interp"]][j, k]
+      }  
+      astm[["interp"]] <-
+         cbind(astm[["interp"]],
+               irradiance)
       colnames(astm[["interp"]])[dim(astm[["interp"]])[2]] <- 
          paste0(sub(pattern = "\\.[a-z]+$", replacement = "", 
-                    x = names(astm[["interp"]])[k-3]), ".radiance")
+                    x = names(astm[["interp"]])[k-3]), ".irradiance")
    }
    
    
+   # calculate radiance fraction and assign to three new columns
+   for (k in 8:dim(astm[["interp"]])[2]) {
+      astm[["interp"]] <- 
+         cbind(astm[["interp"]], 
+               astm[["interp"]][, k] / tail(astm[["interp"]][, k], 1))
+      colnames(astm[["interp"]])[dim(astm[["interp"]])[2]] <- 
+         paste0(names(astm[["interp"]])[k], ".fraction")
+   }
+   
+
    
    # If arg "model" is not equal to either "AM1.5G", "AM0", or "DNCS",
    # return all three models. Otherwise return only the wanted model.
-   if (model == "AM1.5G") {
-      astm[["AM1.5G"]] <- 
-         astm[["interp"]][, c(1, grep(pattern = "^AM1.5G", names(astm[["interp"]])))]
+   astm.model <- "AM1.5G"
+   if (model == astm.model) {
+      astm[[astm.model]] <- 
+         cbind(model = astm.model,
+               energy = nm2eV(astm[["interp"]]$wavelength),
+               astm[["interp"]][, c(1, grep(pattern = paste0("^", astm.model), 
+                                            x = names(astm[["interp"]])))])
       # remove the "AM1.5G" label from all column names before return
       # (unnecessary since model selected explicitly)
-      names(astm[["AM1.5G"]]) <-
-          sub(pattern = "^AM1.5G.", 
-              replacement = "", 
-              x = names(astm[["AM1.5G"]]))
-      return(astm[["AM1.5G"]])
+      names(astm[[astm.model]]) <-
+         sub(pattern = paste0("^", astm.model, "."), 
+             replacement = "", 
+             x = names(astm[[astm.model]]))
+      return(astm[[astm.model]])
    }
    # 
-   if (model == "AM0") {
-      astm[["AM0"]] <- 
-         astm[["interp"]][, c(1, grep(pattern = "^AM0", names(astm[["interp"]])))]
+   astm.model = "AM0"
+   if (model == astm.model) {
+      astm[[astm.model]] <- 
+         cbind(model = astm.model,
+               energy = nm2eV(astm[["interp"]]$wavelength),
+               astm[["interp"]][, c(1, grep(pattern = paste0("^", astm.model), 
+                                            x = names(astm[["interp"]])))])
       # remove the "AM0" label from all column names before return
       # (unnecessary since model selected explicitly)
-      names(astm[["AM0"]]) <-
-         sub(pattern = "^AM0.", 
+      names(astm[[astm.model]]) <-
+         sub(pattern = paste0("^", astm.model, "."), 
              replacement = "", 
-             x = names(astm[["AM0"]]))
-      return(astm[["AM0"]])
+             x = names(astm[[astm.model]]))
+      return(astm[[astm.model]])
    }
    #
-   if (model == "DNCS") {
-      astm[["DNCS"]] <- 
-         astm[["interp"]][, c(1, grep(pattern = "^DNCS", names(astm[["interp"]])))]
+   astm.model = "DNCS"
+   if (model == astm.model) {
+      astm[[astm.model]] <- 
+         cbind(model = astm.model,
+               energy = nm2eV(astm[["interp"]]$wavelength),
+               astm[["interp"]][, c(1, grep(pattern = paste0("^", astm.model), 
+                                            x = names(astm[["interp"]])))])
       # remove the "DNCS" label from all column names before return
       # (unnecessary since model selected explicitly)
-      names(astm[["DNCS"]]) <-
-         sub(pattern = "^DNCS.", 
+      names(astm[[astm.model]]) <-
+         sub(pattern = paste0("^", astm.model, "."), 
              replacement = "", 
-             x = names(astm[["DNCS"]]))
-      return(astm[["DNCS"]])
+             x = names(astm[[astm.model]]))
+      return(astm[[astm.model]])
    }
    # 
    if (!(model %in% c("AM1.5G", "AM0", "DNCS"))) {
-      return(astm[["interp"]])
+      return(cbind(energy = nm2eV(astm[["interp"]]$wavelength),
+                   astm[["interp"]]))
    }
 }
 

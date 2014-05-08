@@ -1,7 +1,7 @@
 source("/home/taha/chepec/chetex/common/R/common/trapz.R")
 source("/home/taha/chepec/chetex/common/R/sunlight/solarconstants.R")
 
-photonflux <- function(wavelength, spectralradiance) {
+photonflux <- function(wavelength, spectralirradiance) {
    #' @title Calculate the photon flux
    #'
    #' @description
@@ -14,9 +14,9 @@ photonflux <- function(wavelength, spectralradiance) {
    #' or m and W m-2 m-1). 
    #'
    #' @param wavelength: vector       / nm
-   #' @param spectralradiance: vector / W m-2 nm-1
+   #' @param spectralirradiance: vector / W m-2 nm-1
    #' @examples
-   #' photonflux(wavelength, spectralradiance)
+   #' photonflux(wavelength, spectralirradiance)
    #' @author Taha Ahmed <taha@@chepec.se>
    #' @return wavelength               / nm
    #' @return photonflux               / s-1 m-2 nm-1
@@ -28,7 +28,7 @@ photonflux <- function(wavelength, spectralradiance) {
    # flux is the rate of flow of a property per unit area
    # here we have flux / s-1 m-2 nm-1
    photonflux <- 
-      spectralradiance * 
+      spectralirradiance * 
       (wavelength / 
           (1E9 * solar.constants["c", "value"] * 
               solar.constants["h", "value"]))
