@@ -1,2 +1,8 @@
+man/
+data/*.rda
+.Rproj.user
 .Rhistory
-*.tex
+.RData
+.Ruserdata
+.Rbuildignore
+*.Rproj
