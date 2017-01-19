@@ -9,8 +9,8 @@
 nm2eV <- function(nm) {
    # Converts wavelength in nm to energy in eV
    eV <-
-      solarconstants["h.eV", "value"] *
-      1E9 * solarconstants["c", "value"] / nm
+      subset(solarconstants, label == "h.eV")$value *
+      1E9 * subset(solarconstants, label == "c")$value / nm
    return(eV)
 }
 
@@ -26,7 +26,7 @@ nm2eV <- function(nm) {
 eV2nm <- function(eV) {
    # Converts energy in eV to wavelength in nm
    nm <-
-      solarconstants["h.eV", "value"] *
-      1E9 * solarconstants["c", "value"] / eV
+      subset(solarconstants, label == "h.eV")$value *
+      1E9 * subset(solarconstants, label == "c")$value / eV
    return(nm)
 }
