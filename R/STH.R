@@ -2,7 +2,6 @@
 #'
 #' Calculate the maximum STH efficiency
 #'
-#'
 #' @param wavelength, in nanometer
 #' @param currentdensity, in A m-2
 #' @param total.irradiance, in W m-2 (note: scalar, not vector)

@@ -8,13 +8,9 @@
 #' @export
 nm2eV <- function(nm) {
    # Converts wavelength in nm to energy in eV
-   #
-   sun.constants <- common::LoadRData2Variable("data/solarconstants.rda")
-
    eV <-
-      sun.constants["h.eV", "value"] *
-      1E9 * sun.constants["c", "value"] / nm
-
+      photoec::solarconstants["h.eV", "value"] *
+      1E9 * photoec::solarconstants["c", "value"] / nm
    return(eV)
 }
 
@@ -29,12 +25,8 @@ nm2eV <- function(nm) {
 #' @export
 eV2nm <- function(eV) {
    # Converts energy in eV to wavelength in nm
-   #
-   sun.constants <- common::LoadRData2Variable("data/solarconstants.rda")
-
    nm <-
-      sun.constants["h.eV", "value"] *
-      1E9 * sun.constants["c", "value"] / eV
-
+      photoec::solarconstants["h.eV", "value"] *
+      1E9 * photoec::solarconstants["c", "value"] / eV
    return(nm)
 }

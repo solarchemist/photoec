@@ -1,4 +1,4 @@
-#' @name solar.constants
+#' @name solarconstants
 #' @title Solar constants
 #' @description A dataset containing some constants related to sunlight.
 #' @docType data
