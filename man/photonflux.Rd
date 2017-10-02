@@ -28,4 +28,3 @@ Provide wavelength and spectral irradiance.
     It is important that provided wavelength and spectral irradiance
     use the same length unit (for example, nm and W m-2 nm-1, or m and W m-2 m-1).
 }
-

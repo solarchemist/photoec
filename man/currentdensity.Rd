@@ -25,4 +25,3 @@ Calculate the short-circuit current density (Jsc) from wavelength and photon flu
 \details{
 If you use this function together with STH(), set the quantum.efficiency only once, either here or in \code{\link{STH}}.
 }
-

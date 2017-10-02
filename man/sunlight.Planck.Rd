@@ -18,4 +18,3 @@ dataframe
 Calculate the spectral radiance for an ideal black-body
     using Planck's law, for a specified wavelength range and step-size
 }
-

@@ -17,4 +17,3 @@
 \description{
 ASTM G173-03 reference spectra, derived from SMARTS v2.9.2
 }
-

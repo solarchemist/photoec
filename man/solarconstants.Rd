@@ -22,4 +22,3 @@ A dataset containing some constants related to sunlight.
 \author{
 Taha Ahmed
 }
-

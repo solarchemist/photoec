@@ -25,4 +25,3 @@ dataframe with 3 columns: : energy (eV), wavelength (nm), and current density (A
 \description{
 Calculate the maximum STH efficiency
 }
-

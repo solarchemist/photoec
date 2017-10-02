@@ -44,4 +44,3 @@ Calculate the spectral irradiance of sunlight on Earth
 sunlight.ASTM(wavelength = seq(400, 450, by = 0.1), model = "AM1.5G")
 }
 }
-
