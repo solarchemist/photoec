@@ -47,8 +47,7 @@ sunlight.ASTM <- function(wavelength = c(seq(280, 400, 0.5),
    }
 
    astm <- list()
-   astm[["source"]] <-
-      common::LoadRData2Variable("data/ASTMG173.rda")
+   astm[["source"]] <- photoec::ASTMG173
    names(astm[["source"]]) <-
       c("wavelength",
         "AM0",
@@ -172,7 +171,7 @@ sunlight.ASTM <- function(wavelength = c(seq(280, 400, 0.5),
    if (model == astm.model) {
       astm[[astm.model]] <-
          cbind(model = astm.model,
-               energy = nm2eV(astm[["interp"]]$wavelength),
+               energy = photoec::wavelength2energy(astm[["interp"]]$wavelength),
                astm[["interp"]][, c(1, grep(pattern = paste0("^", astm.model),
                                             x = names(astm[["interp"]])))])
       # remove the "AM1.5G" label from all column names before return
@@ -188,7 +187,7 @@ sunlight.ASTM <- function(wavelength = c(seq(280, 400, 0.5),
    if (model == astm.model) {
       astm[[astm.model]] <-
          cbind(model = astm.model,
-               energy = nm2eV(astm[["interp"]]$wavelength),
+               energy = photoec::wavelength2energy(astm[["interp"]]$wavelength),
                astm[["interp"]][, c(1, grep(pattern = paste0("^", astm.model),
                                             x = names(astm[["interp"]])))])
       # remove the "AM0" label from all column names before return
@@ -204,7 +203,7 @@ sunlight.ASTM <- function(wavelength = c(seq(280, 400, 0.5),
    if (model == astm.model) {
       astm[[astm.model]] <-
          cbind(model = astm.model,
-               energy = nm2eV(astm[["interp"]]$wavelength),
+               energy = photoec::wavelength2energy(astm[["interp"]]$wavelength),
                astm[["interp"]][, c(1, grep(pattern = paste0("^", astm.model),
                                             x = names(astm[["interp"]])))])
       # remove the "DNCS" label from all column names before return
@@ -217,7 +216,7 @@ sunlight.ASTM <- function(wavelength = c(seq(280, 400, 0.5),
    }
    #
    if (!(model %in% c("AM1.5G", "AM0", "DNCS"))) {
-      return(cbind(energy = nm2eV(astm[["interp"]]$wavelength),
+      return(cbind(energy = photoec::wavelength2energy(astm[["interp"]]$wavelength),
                    astm[["interp"]]))
    }
 }

@@ -12,7 +12,7 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
    # Throw error if wavelength contains any values <= 0
    # Throw error if temperature is T <= 0
 
-   sun.constants <- common::LoadRData2Variable("data/solarconstants.rda")
+   sun.constants <- photoec::solarconstants
 
    factor.inversesquare <-
       (sun.constants["R.Sun", "value"] / sun.constants["R.AU", "value"])^2

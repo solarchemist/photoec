@@ -4,9 +4,9 @@
 \alias{STH}
 \title{Calculate maximium solar-to-hydrogen efficiency}
 \usage{
-STH(wavelength, currentdensity, total.irradiance = max(sunlight.ASTM(model =
-  "AM1.5G")$irradiance), electrode.potential = 1.23,
-  faradaic.efficiency = 1)
+STH(wavelength, currentdensity,
+  total.irradiance = max(photoec::sunlight.ASTM(model = "AM1.5G")$irradiance),
+  electrode.potential = 1.23, faradaic.efficiency = 1)
 }
 \arguments{
 \item{wavelength, }{in nanometer}

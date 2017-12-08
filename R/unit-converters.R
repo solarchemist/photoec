@@ -13,8 +13,8 @@ nm2eV <- function(nm) {
    .Deprecated("wavelength2energy")
    # Converts wavelength in nm to energy in eV
    eV <-
-      subset(solarconstants, label == "h.eV")$value *
-      1E9 * subset(solarconstants, label == "c")$value / nm
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      1E9 * subset(photoec::solarconstants, label == "c")$value / nm
    return(eV)
 }
 
@@ -30,8 +30,8 @@ nm2eV <- function(nm) {
 wavelength2energy <- function(nm) {
    # Converts wavelength in nm to energy in eV
    eV <-
-      subset(solarconstants, label == "h.eV")$value *
-      1E9 * subset(solarconstants, label == "c")$value / nm
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      1E9 * subset(photoec::solarconstants, label == "c")$value / nm
    return(eV)
 }
 
@@ -49,8 +49,8 @@ eV2nm <- function(eV) {
    .Deprecated("energy2wavelength")
    # Converts energy in eV to wavelength in nm
    nm <-
-      subset(solarconstants, label == "h.eV")$value *
-      1E9 * subset(solarconstants, label == "c")$value / eV
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      1E9 * subset(photoec::solarconstants, label == "c")$value / eV
    return(nm)
 }
 
@@ -66,8 +66,8 @@ eV2nm <- function(eV) {
 energy2wavelength <- function(eV) {
    # Converts energy in eV to wavelength in nm
    nm <-
-      subset(solarconstants, label == "h.eV")$value *
-      1E9 * subset(solarconstants, label == "c")$value / eV
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      1E9 * subset(photoec::solarconstants, label == "c")$value / eV
    return(nm)
 }
 
@@ -82,8 +82,8 @@ energy2wavelength <- function(eV) {
 #' @export
 wavenum2energy <- function(wavenumber) {
    energy <-
-      subset(solarconstants, label == "h.eV")$value *
-          subset(solarconstants, label == "c")$value * 1E2 * wavenumber
+      subset(photoec::solarconstants, label == "h.eV")$value *
+          subset(photoec::solarconstants, label == "c")$value * 1E2 * wavenumber
    return(energy)
 }
 
@@ -99,7 +99,7 @@ wavenum2energy <- function(wavenumber) {
 energy2wavenum <- function(energy) {
    wavenum <-
       1E-2 * energy /
-      (subset(solarconstants, label == "h.eV")$value *
-          subset(solarconstants, label == "c")$value)
+      (subset(photoec::solarconstants, label == "h.eV")$value *
+          subset(photoec::solarconstants, label == "c")$value)
    return(wavenum)
 }

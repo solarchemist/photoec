@@ -18,7 +18,7 @@
 #' }
 #' @export
 photonflux <- function(wavelength, spectralirradiance) {
-   solar.constants <- common::LoadRData2Variable("data/solarconstants.rda")
+   solar.constants <- photoec::solarconstants
 
    # flux is the rate of flow of a property per unit area
    # here we have flux / s-1 m-2 nm-1

@@ -13,13 +13,13 @@
 STH <- function(wavelength,
                 currentdensity,
                 total.irradiance =
-                   max(sunlight.ASTM(model = "AM1.5G")$irradiance),
+                   max(photoec::sunlight.ASTM(model = "AM1.5G")$irradiance),
                 electrode.potential = 1.23,
                 faradaic.efficiency = 1) {
 
    STH <- (currentdensity * electrode.potential * faradaic.efficiency) / total.irradiance
 
-   df <- data.frame(energy = nm2eV(wavelength),
+   df <- data.frame(energy = photoec::wavelength2energy(wavelength),
                     wavelength = wavelength,
                     STH = STH)
 

@@ -27,13 +27,13 @@ currentdensity <- function(wavelength,
       eV <- FALSE
    }
 
-   bg.nm <- ifelse(eV, eV2nm(bandgap), bandgap)
+   bg.nm <- ifelse(eV, photoec::energy2wavelength(bandgap), bandgap)
 
-   sun.constants <- common::LoadRData2Variable("data/solarconstants.rda")
+   sun.constants <- photoec::solarconstants
 
    # current density = photonflux * elementary charge
    currentdensity <-
-      data.frame(energy = nm2eV(wavelength),
+      data.frame(energy = photoec::wavelength2energy(wavelength),
                  wavelength = wavelength,
                  currentdensity = quantum.efficiency * photonflux.csum *
                     sun.constants["e", "value"])
