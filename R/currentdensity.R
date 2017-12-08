@@ -36,7 +36,7 @@ currentdensity <- function(wavelength,
       data.frame(energy = photoec::wavelength2energy(wavelength),
                  wavelength = wavelength,
                  currentdensity = quantum.efficiency * photonflux.csum *
-                    sun.constants["e", "value"])
+                    subset(sun.constants, label == "e")$value)
 
    # set all current densities above the band gap to zero
    currentdensity$currentdensity[which(currentdensity$wavelength > bg.nm)] <- 0

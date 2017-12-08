@@ -25,8 +25,8 @@ photonflux <- function(wavelength, spectralirradiance) {
    photonflux <-
       spectralirradiance *
       (wavelength /
-          (1E9 * solar.constants["c", "value"] *
-              solar.constants["h", "value"]))
+          (1E9 * subset(solar.constants, label == "c")$value *
+              subset(solar.constants, label == "h")$value))
    # integrate numerically under curve with trapz()
    photonflux.trapz <-
       c(0,
