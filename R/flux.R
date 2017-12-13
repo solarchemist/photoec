@@ -119,16 +119,21 @@ cumflux <- function(wl.start = 280, wl.stop = 4000, model = "AM1.5G") {
       dplyr::select(wavelength, energy, dplyr::starts_with(model))
 
    # check that wavelength is inside the ASTM range: 280 nm -- 4000 nm
-   if (any(wl.start < min(astm.data$wavelength)) | any(wl.start > max(astm.data$wavelength))) {
+   if (any(wl.start < min(astm.data$wavelength), na.rm = T) | any(wl.start > max(astm.data$wavelength), na.rm = T)) {
       stop("Extrapolation is not possible. Wavelength must lie inside the range 280 nm -- 4000 nm (inclusive).")
    }
-   if (any(wl.stop < min(astm.data$wavelength)) | any(wl.stop > max(astm.data$wavelength))) {
+   if (any(wl.stop < min(astm.data$wavelength), na.rm = T) | any(wl.stop > max(astm.data$wavelength), na.rm = T)) {
       stop("Extrapolation is not possible. Wavelength must lie inside the range 280 nm -- 4000 nm (inclusive).")
    }
 
    # this loop is to handle more than one element in wl.start or wl.stop
    cflux <- NULL
    for (i in 1:length(wl.start)) {
+      # if wl.start[i] or wl.stop[i] is.na() == TRUE, skip this iteration and move to the next one
+      if (is.na(wl.start[i]) | is.na(wl.stop[i])) {
+         cflux <- c(cflux, NA)
+         next
+      }
 
       this.data <-
          astm.data %>%
