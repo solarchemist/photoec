@@ -1,5 +1,0 @@
-Sunlight spectra for photoelectrochemistry
-
-With functions for calculating photon flux, current density, and solar-to-hydrogen
-efficiency based on the ASTM G173-03 reference spectra (AM1.5G and friends) or based
-on black-body radiation (Planck theory), for any wavelength (or energy) range.

@@ -7,9 +7,9 @@
 #'   \item{name}{Common name of constant}
 #'   \item{label}{Short label, useful for indexing}
 #'   \item{value}{The numeric value of the constant}
-#'   \item{label.tex}{The label, LaTeX formatted}
-#'   \item{unit.tex}{The unit, LaTeX formatted (using siunitx package)}
 #'   \item{reference}{Reference, if any}
+#'   \item{label.tex}{The label, LaTeX formatted}
+#'   \item{unit.tex}{The unit, LaTeX formatted (using siunitx package v2)}
 #' }
 #' @source \url{http://physics.nist.gov/cuu/Constants/}
 #' @author Taha Ahmed

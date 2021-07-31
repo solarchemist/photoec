@@ -4,8 +4,10 @@
 \alias{sunlight.ASTM}
 \title{Calculate irradiances based on ASTM G173-03 reference}
 \usage{
-sunlight.ASTM(wavelength = c(seq(280, 400, 0.5), seq(401, 1700, 1), 1702,
-  seq(1705, 4000, 5)), model = "")
+sunlight.ASTM(
+  wavelength = c(seq(280, 400, 0.5), seq(401, 1700, 1), 1702, seq(1705, 4000, 5)),
+  model = ""
+)
 }
 \arguments{
 \item{wavelength}{defaults to the wavelength values used in the G173-03 model}

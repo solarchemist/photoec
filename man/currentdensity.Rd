@@ -4,8 +4,12 @@
 \alias{currentdensity}
 \title{Calculate short-circuit current density}
 \usage{
-currentdensity(wavelength, photonflux.csum, quantum.efficiency = 1,
-  bandgap = 1.23)
+currentdensity(
+  wavelength,
+  photonflux.csum,
+  quantum.efficiency = 1,
+  bandgap = 1.23
+)
 }
 \arguments{
 \item{wavelength, }{in nanometer}

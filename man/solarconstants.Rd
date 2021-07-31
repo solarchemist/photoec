@@ -4,15 +4,17 @@
 \name{solarconstants}
 \alias{solarconstants}
 \title{Solar constants}
-\format{A data frame with 11 rows and 6 variables:
+\format{
+A data frame with 11 rows and 6 variables:
 \describe{
   \item{name}{Common name of constant}
   \item{label}{Short label, useful for indexing}
   \item{value}{The numeric value of the constant}
-  \item{label.tex}{The label, LaTeX formatted}
-  \item{unit.tex}{The unit, LaTeX formatted (using siunitx package)}
   \item{reference}{Reference, if any}
-}}
+  \item{label.tex}{The label, LaTeX formatted}
+  \item{unit.tex}{The unit, LaTeX formatted (using siunitx package v2)}
+}
+}
 \source{
 \url{http://physics.nist.gov/cuu/Constants/}
 }

@@ -4,13 +4,15 @@
 \name{ASTMG173}
 \alias{ASTMG173}
 \title{ASTM G173-03 reference spectra}
-\format{A data frame with 2002 rows and 4 variables:
+\format{
+A data frame with 2002 rows and 4 variables:
 \describe{
   \item{wavelength}{Wavelength, in nm}
   \item{extraterrestrial}{AM0 reference spectrum, extraterrestrial radiation, in W * m-2 * nm-1}
   \item{globaltilt}{AM1.5 global tilt reference spectrum, in W * m-2 * nm-1}
   \item{direct.circumsolar}{Direct normal circumsolar reference spectrum, in W * m-2 * nm-1}
-}}
+}
+}
 \source{
 \url{http://rredc.nrel.gov/solar/spectra/am1.5/astmg173/astmg173.html}
 }
