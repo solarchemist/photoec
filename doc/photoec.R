@@ -1,0 +1,146 @@
+## ----packages, echo=T, message=FALSE------------------------------------------
+library(dplyr)
+library(knitr)
+library(usethis)   # use_data()
+library(tibble)    # tribble()
+library(constants) # syms
+library(here)      # here()
+
+## ----global_options, echo=T, message=FALSE----------------------------------------
+options(
+   digits   = 7,
+   width    = 84,
+   continue = " ",
+   prompt   = "> ",
+   warn = 0,
+   stringsAsFactors = FALSE)
+opts_chunk$set(
+   echo       = FALSE,
+   eval       = TRUE,
+   cache      = TRUE,
+   collapse   = TRUE,
+   results    = 'hide',
+   message    = FALSE,
+   warning    = FALSE,
+   tidy       = FALSE)
+
+## ----solarconstants---------------------------------------------------------------
+solarconstants <- 
+   tribble(
+      ~name,                       ~label,     ~value,       ~reference,           ~label.tex,          ~unit.tex,
+      "Speed of light",            "c",        syms$c0,      "per definition",     "$c$",               "\\si{\\metre\\per\\second}",
+      "Elementary charge",         "e",        syms$e,       "CODATA 2018",        "$e$",               "\\si{\\coulomb}",
+      "Planck's constant",         "h",        syms$h,       "CODATA 2018",        "$h$",               "\\si{\\joule\\second}",
+      "Planck's constant",         "h.eV",     syms$hev,     "CODATA 2018",        "$h_\\text{eV}$",    "\\si{\\electronvolt\\second}",
+      "Boltzmann's constant",      "k",        syms$k,       "CODATA 2018",        "$k$",               "\\si{\\joule\\per\\kelvin}",
+      "Stefan-Boltzmann constant", "sigma",    syms$sigma0,  "CODATA 2018",        "$\\sigma$",         "\\si{\\watt\\per\\square\\metre\\per\\kelvin\\tothe{4}}",
+      "Astronomical unit",         "R.AU",     149597870700, "per definition",     "$R_\\text{AU}$",    "\\si{\\metre}",
+      "Radius of the Sun",         "R.Sun",    695500000,    "",                   "$R_\\text{Sun}$",   "\\si{\\metre}",
+      "Surface area of the Sun",   "A.Sun",    6.078608e+18, "A = 4*pi*R.Sun^2",   "$A_\\text{Sun}$",   "\\si{\\square\\metre}",
+      "Radius of the Earth",       "R.Earth",  6371008.7714, "",                   "$R_\\text{Earth}$", "\\si{\\metre}",
+      "Surface area of the Earth", "A.Earth",  5.100659e+14, "A = 4*pi*R.Earth^2", "$A_\\text{Earth}$", "\\si{\\square\\metre}")
+
+## ----legacy-definition-solarconstants, eval=FALSE, echo=FALSE---------------------
+#  solarconstants <-
+#     structure(
+#        list(
+#           name =
+#              c("Speed of light",
+#                "Elementary charge",
+#                "Planck's constant",
+#                "Planck's constant",
+#                "Boltzmann's constant",
+#                "Stefan-Boltzmann constant",
+#                "Astronomical unit",
+#                "Radius of the Sun",
+#                "Surface area of the Sun",
+#                "Radius of the Earth",
+#                "Surface area of the Earth"),
+#           label =
+#              c("c",        # Speed of light
+#                "e",        # Elementary charge
+#                "h",        # Planck's constant
+#                "h.eV",     # Planck's constant
+#                "k",        # Boltzmann's constant
+#                "sigma",    # Stefan-Boltzmann constant
+#                "R.AU",     # Astronomical unit
+#                "R.Sun",    # Radius of the Sun
+#                "A.Sun",    # Surface area of the Sun
+#                "R.Earth",  # Radius of the Earth
+#                "A.Earth"), # Surface area of the Earth
+#           value =
+#              c(299792458,
+#                1.602176487e-19,
+#                6.62606896e-34,
+#                4.13566733e-15,
+#                1.3806504e-23,
+#                5.67040047372095e-08,
+#                1.496e+11,
+#                695500000,
+#                6.078608e+18,
+#                6371008.7714,
+#                5.100659e+14),
+#           label.tex =
+#              c("$c$",
+#                "$e$",
+#                "$h$",
+#                "$h_\\text{eV}$",
+#                "$k$",
+#                "$\\sigma$",
+#                "$R_\\text{AU}$",
+#                "$R_\\text{Sun}$",
+#                "$R_\\text{Earth}$",
+#                "$A_\\text{Earth}$"),
+#           unit.tex =
+#              c("\\si{\\metre\\per\\second}",
+#                "\\si{\\coulomb}",
+#                "\\si{\\joule\\second}",
+#                "\\si{\\electronvolt\\second}",
+#                "\\si{\\joule\\per\\kelvin}",
+#                "\\si{\\watt\\per\\square\\metre\\per\\kelvin\\tothe{4}}",
+#                "\\si{\\metre}",
+#                "\\si{\\metre}",
+#                "\\si{\\square\\metre}",
+#                "\\si{\\metre}",
+#                "\\si{\\metre}"),
+#           reference =
+#              c("per definition",
+#                "",
+#                "",
+#                "",
+#                "",
+#                "",
+#                "",
+#                "",
+#                "",
+#                "",
+#                "A = 4 * pi * R.Earth^2")),
+#        .Names =
+#           c("name",
+#             "label",
+#             "value",
+#             "label.tex",
+#             "unit.tex",
+#             "reference"),
+#        row.names = seq(1, 11),
+#        class = "data.frame")
+
+## ----ASTMG173---------------------------------------------------------------------
+# the CSV file we downloaded from NREL is saved in inst/extdata (it's not modified by this script)
+ASTMG173 <- 
+   read.csv(
+      file = here("inst/extdata", "ASTMG173.csv"), 
+      skip = 1,
+      col.names = 
+         c("wavelength",          # nm
+           "extraterrestrial",    # W m⁻² nm⁻¹
+           "globaltilt",          # W m⁻² nm⁻¹
+           "direct.circumsolar")) # W m⁻² nm⁻¹
+
+## ---- echo=T----------------------------------------------------------------------
+# use_data() saves each object as rda file in ./data/
+use_data(solarconstants, ASTMG173, overwrite = TRUE)
+# also save the dataset as csv files, for ease of reading
+write.csv(solarconstants, file = here("data", "solarconstants.csv"), row.names = FALSE)
+write.csv(ASTMG173, file = here("data", "ASTMG173.csv"), row.names = FALSE)
+

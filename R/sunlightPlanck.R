@@ -8,6 +8,7 @@
 #'
 #' @return dataframe
 #' @export
+#' @importFrom rlang .data
 sunlight.Planck <- function(wavelength, temperature = 5778) {
    # Throw error if wavelength contains any values <= 0
    # Throw error if temperature is T <= 0
@@ -19,11 +20,11 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
 
    # Just to avoid this long expression inside the dataframe below, we give it a shorter name...
    spectralradiance <-
-      ((2 * pi * subset(sun.constants, label == "h")$value *
-           subset(sun.constants, label == "c")$value^2) / (wavelength^5)) *
-      (1 / (exp((subset(sun.constants, label == "h")$value *
-                    subset(sun.constants, label == "c")$value) /
-                   (wavelength * subset(sun.constants, label == "k")$value * temperature)) - 1))
+      ((2 * pi * subset(sun.constants, .data$label == "h")$value *
+           subset(sun.constants, .data$label == "c")$value^2) / (wavelength^5)) *
+      (1 / (exp((subset(sun.constants, .data$label == "h")$value *
+                    subset(sun.constants, .data$label == "c")$value) /
+                   (wavelength * subset(sun.constants, .data$label == "k")$value * temperature)) - 1))
 
    # Based on theory (i.e., Planck's law) we can calculate Solar output at the Sun and outside the Earth's atmosphere
    theory <-
@@ -32,12 +33,12 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
                  ### Characteristics of sunlight at the Sun's surface
                  Sun.spectralradiance = spectralradiance,
                  Sun.spectralradiance.powerterm =
-                    ((2 * pi * subset(sun.constants, label == "h")$value *
-                         subset(sun.constants, label == "c")$value^2) / (wavelength^5)),
+                    ((2 * pi * subset(sun.constants, .data$label == "h")$value *
+                         subset(sun.constants, .data$label == "c")$value^2) / (wavelength^5)),
                  Sun.spectralradiance.expterm =
-                    (1 / (exp((subset(sun.constants, label == "h")$value *
-                                  subset(sun.constants, label == "c")$value) /
-                                 (wavelength * subset(sun.constants, label == "k")$value *
+                    (1 / (exp((subset(sun.constants, .data$label == "h")$value *
+                                  subset(sun.constants, .data$label == "c")$value) /
+                                 (wavelength * subset(sun.constants, .data$label == "k")$value *
                                      temperature)) - 1)),
                  # spectral radiance numerically integrated using trapezoidal approx
                  Sun.spectralradiance.trapz =
@@ -48,7 +49,7 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
                  # luminosity (total radiance times surface area) units of \watt
                  Sun.luminosity =
                     sum(c(0, common::trapz(wavelength, spectralradiance))) *
-                    subset(sun.constants, label == "A.Sun")$value,
+                    subset(sun.constants, .data$label == "A.Sun")$value,
                  ############################################################################
                  ### Characteristics of sunlight at (immediately outside) Earth's atmosphere
                  E.spectralradiance = factor.inversesquare * spectralradiance,
@@ -61,7 +62,7 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
                  E.luminosity =
                     sum(c(0, common::trapz(wavelength,
                                    factor.inversesquare * spectralradiance))) *
-                    0.5 * subset(sun.constants, label == "A.Earth")$value)
+                    0.5 * subset(sun.constants, .data$label == "A.Earth")$value)
 
    return(theory)
 }

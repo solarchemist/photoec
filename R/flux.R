@@ -20,6 +20,7 @@
 #'
 #' @return Vector with flux values at the given wavelength values.
 #' @export
+#' @importFrom rlang .data
 flux <- function(wavelength, model = "AM1.5G") {
    # check that argument model is not empty string and one of
    # "AM1.5G", "AM0", or "DNCS"
@@ -30,7 +31,7 @@ flux <- function(wavelength, model = "AM1.5G") {
    solarconstants <- photoec::solarconstants
    astm.data <-
       photoec::sunlight.ASTM() %>%
-      dplyr::select(wavelength, energy, dplyr::starts_with(model))
+      dplyr::select(.data$wavelength, .data$energy, dplyr::starts_with(model))
    # strip that part of the name from every column
    names(astm.data) <- sub(paste0("^", model, "\\."), "", names(astm.data))
 
@@ -75,6 +76,7 @@ flux <- function(wavelength, model = "AM1.5G") {
 #' @importFrom magrittr "%>%"
 #'
 #' @return the total flux across the wl range, number (vector if more than one range)
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' \dontrun{
@@ -116,7 +118,7 @@ cumflux <- function(wl.start = 280, wl.stop = 4000, model = "AM1.5G") {
    solarconstants <- photoec::solarconstants
    astm.data <-
       photoec::sunlight.ASTM() %>%
-      dplyr::select(wavelength, energy, dplyr::starts_with(model))
+      dplyr::select(.data$wavelength, .data$energy, dplyr::starts_with(model))
 
    # check that wavelength is inside the ASTM range: 280 nm -- 4000 nm
    if (any(wl.start < min(astm.data$wavelength), na.rm = T) | any(wl.start > max(astm.data$wavelength), na.rm = T)) {
@@ -137,7 +139,7 @@ cumflux <- function(wl.start = 280, wl.stop = 4000, model = "AM1.5G") {
 
       this.data <-
          astm.data %>%
-         dplyr::filter(wavelength > wl.start[i] & wavelength < wl.stop[i])
+         dplyr::filter(.data$wavelength > wl.start[i] & .data$wavelength < wl.stop[i])
       # strip that part of the name from every column
       names(astm.data) <- sub(paste0("^", model, "\\."), "", names(astm.data))
       names(this.data) <- sub(paste0("^", model, "\\."), "", names(this.data))
@@ -232,6 +234,7 @@ cumflux <- function(wl.start = 280, wl.stop = 4000, model = "AM1.5G") {
 #'        \item{photonflux.fraction}{photon flux fraction (from 0 - 1)}
 #' }
 #' @export
+#' @importFrom rlang .data
 photonflux <- function(wavelength, spectralirradiance) {
    .Deprecated("photoec::flux", msg="use photoec::flux() or photoec::cumflux() instead")
    solar.constants <- photoec::solarconstants
@@ -241,8 +244,8 @@ photonflux <- function(wavelength, spectralirradiance) {
    photonflux <-
       spectralirradiance *
       (wavelength /
-          (1E9 * subset(solar.constants, label == "c")$value *
-              subset(solar.constants, label == "h")$value))
+          (1E9 * subset(solar.constants, .data$label == "c")$value *
+              subset(solar.constants, .data$label == "h")$value))
    # integrate numerically under curve with trapz()
    photonflux.trapz <-
       c(0,
