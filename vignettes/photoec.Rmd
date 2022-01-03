@@ -35,7 +35,7 @@ options(
    warn = 0,
    stringsAsFactors = FALSE)
 opts_chunk$set(
-   echo       = FALSE,
+   echo       = TRUE,
    eval       = TRUE,
    cache      = TRUE,
    collapse   = TRUE,
