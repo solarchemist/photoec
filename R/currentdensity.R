@@ -2,7 +2,8 @@
 #'
 #' Calculate the short-circuit current density (Jsc) from wavelength and photon flux.
 #'
-#' @details If you use this function together with STH(), set the quantum.efficiency only once, either here or in \code{\link{STH}}.
+#' @details If you use this function together with STH(), set the 
+#'   quantum.efficiency only once, either here or in \code{\link{STH}}.
 #'
 #' @param wavelength, in nanometer
 #' @param photonflux.csum, s-1 m-2
@@ -11,7 +12,6 @@
 #'
 #' @return dataframe: energy (eV), wavelength (nm), and current density (A m-2)
 #' @export
-#' @importFrom rlang .data
 currentdensity <- function(wavelength,
                            photonflux.csum,
                            quantum.efficiency = 1,
@@ -37,7 +37,7 @@ currentdensity <- function(wavelength,
       data.frame(energy = photoec::wavelength2energy(wavelength),
                  wavelength = wavelength,
                  currentdensity = quantum.efficiency * photonflux.csum *
-                    subset(sun.constants, .data$label == "e")$value)
+                    subset(sun.constants, label == "e")$value)
 
    # set all current densities above the band gap to zero
    currentdensity$currentdensity[which(currentdensity$wavelength > bg.nm)] <- 0

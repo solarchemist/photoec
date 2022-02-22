@@ -1,25 +1,5 @@
 # Note: functions to convert to/from wavenumber/wavelength exist in your R-common package.
 
-#' nm2eV
-#'
-#' Convert from nanometer to electron volt
-#' DEPRECATED. Please use wavelength2energy() instead.
-#'
-#' @param nm vector or scalar, in nm
-#'
-#' @return electron volts
-#' @export
-#' @importFrom rlang .data
-nm2eV <- function(nm) {
-   .Deprecated("wavelength2energy")
-   # Converts wavelength in nm to energy in eV
-   eV <-
-      subset(photoec::solarconstants, .data$label == "h.eV")$value *
-      1E9 * subset(photoec::solarconstants, .data$label == "c")$value / nm
-   return(eV)
-}
-
-
 #' wavelength2energy
 #'
 #' Convert from nanometer to electron volt
@@ -27,34 +7,20 @@ nm2eV <- function(nm) {
 #' @param nm vector or scalar, in nm
 #'
 #' @return electron volts
+#' @examples
+#' \dontrun{
+#' wavelength2energy(432)
+#' wavelength2energy(733)
+#' }
 #' @export
-#' @importFrom rlang .data
 wavelength2energy <- function(nm) {
    # Converts wavelength in nm to energy in eV
    eV <-
-      subset(photoec::solarconstants, .data$label == "h.eV")$value *
-      1E9 * subset(photoec::solarconstants, .data$label == "c")$value / nm
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      1E9 *
+      subset(photoec::solarconstants, label == "c")$value /
+      nm
    return(eV)
-}
-
-
-#' eV2nm
-#'
-#' Convert from electron volt to nanometer
-#' DEPRECATED. Please use energy2wavelength() instead.
-#'
-#' @param eV vector or scalar, in eV
-#'
-#' @return nanometers
-#' @export
-#' @importFrom rlang .data
-eV2nm <- function(eV) {
-   .Deprecated("energy2wavelength")
-   # Converts energy in eV to wavelength in nm
-   nm <-
-      subset(photoec::solarconstants, .data$label == "h.eV")$value *
-      1E9 * subset(photoec::solarconstants, .data$label == "c")$value / eV
-   return(nm)
 }
 
 
@@ -65,13 +31,19 @@ eV2nm <- function(eV) {
 #' @param eV vector or scalar, in eV
 #'
 #' @return nanometers
+#' @examples
+#' \dontrun{
+#' energy2wavelength(3.25)
+#' energy2wavelength(1.92)
+#' }
 #' @export
-#' @importFrom rlang .data
 energy2wavelength <- function(eV) {
    # Converts energy in eV to wavelength in nm
    nm <-
-      subset(photoec::solarconstants, .data$label == "h.eV")$value *
-      1E9 * subset(photoec::solarconstants, .data$label == "c")$value / eV
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      1E9 *
+      subset(photoec::solarconstants, label == "c")$value /
+      eV
    return(nm)
 }
 
@@ -83,12 +55,18 @@ energy2wavelength <- function(eV) {
 #' @param wavenumber  numeric, scalar or vector
 #'
 #' @return numeric, scalar or vector
+#' @examples
+#' \dontrun{
+#' wavenum2energy(1660)
+#' wavenum2energy(3500)
+#' }
 #' @export
-#' @importFrom rlang .data
 wavenum2energy <- function(wavenumber) {
    energy <-
-      subset(photoec::solarconstants, .data$label == "h.eV")$value *
-          subset(photoec::solarconstants, .data$label == "c")$value * 1E2 * wavenumber
+      subset(photoec::solarconstants, label == "h.eV")$value *
+      subset(photoec::solarconstants, label == "c")$value *
+      1E2 *
+      wavenumber
    return(energy)
 }
 
@@ -101,11 +79,11 @@ wavenum2energy <- function(wavenumber) {
 #'
 #' @return numeric, scalar or vector
 #' @export
-#' @importFrom rlang .data
 energy2wavenum <- function(energy) {
    wavenum <-
-      1E-2 * energy /
-      (subset(photoec::solarconstants, .data$label == "h.eV")$value *
-          subset(photoec::solarconstants, .data$label == "c")$value)
+      1E-2 * energy / (
+         subset(photoec::solarconstants, label == "h.eV")$value *
+         subset(photoec::solarconstants, label == "c")$value
+      )
    return(wavenum)
 }

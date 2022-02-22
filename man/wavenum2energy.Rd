@@ -15,3 +15,9 @@ numeric, scalar or vector
 \description{
 Converts wavenumber (cm-1) to energy (eV)
 }
+\examples{
+\dontrun{
+wavenum2energy(1660)
+wavenum2energy(3500)
+}
+}

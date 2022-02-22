@@ -27,5 +27,6 @@ dataframe: energy (eV), wavelength (nm), and current density (A m-2)
 Calculate the short-circuit current density (Jsc) from wavelength and photon flux.
 }
 \details{
-If you use this function together with STH(), set the quantum.efficiency only once, either here or in \code{\link{STH}}.
+If you use this function together with STH(), set the 
+  quantum.efficiency only once, either here or in \code{\link{STH}}.
 }

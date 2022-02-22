@@ -15,3 +15,9 @@ electron volts
 \description{
 Convert from nanometer to electron volt
 }
+\examples{
+\dontrun{
+wavelength2energy(432)
+wavelength2energy(733)
+}
+}
