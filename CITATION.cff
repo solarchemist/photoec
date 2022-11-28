@@ -8,7 +8,7 @@ message: 'To cite package "photoec" in publications, please use the metadata fro
 type: software
 license: GPL-3.0-or-later
 title: 'Sunlight spectra for photoelectrochemistry'
-version: 0.2.1.9000
+version: 0.2.3.9000
 abstract: Calculate photon flux, current density, and solar-to-hydrogen efficiency
   based on ASTM G173-03 reference spectra (AM1.5G and friends) or based on black-body
   (Planck theory), for any wavelength (or energy) range.

@@ -12,56 +12,64 @@ sunlight.Planck <- function(wavelength, temperature = 5778) {
    # Throw error if wavelength contains any values <= 0
    # Throw error if temperature is T <= 0
 
+   # tibble [11 × 6]
    sun.constants <- photoec::solarconstants
 
    factor.inversesquare <-
-      (sun.constants["R.Sun", "value"] / sun.constants["R.AU", "value"])^2
+      (subset(sun.constants, label == "R.Sun")$value /
+       subset(sun.constants, label == "R.AU")$value)^2
 
-   # Just to avoid this long expression inside the dataframe below, we give it a shorter name...
+   # calculate spectral radiance for all wavelength values
    spectralradiance <-
       ((2 * pi * subset(sun.constants, label == "h")$value *
-           subset(sun.constants, label == "c")$value^2) / (wavelength^5)) *
+        subset(sun.constants, label == "c")$value^2) / (wavelength^5)) *
       (1 / (exp((subset(sun.constants, label == "h")$value *
-                    subset(sun.constants, label == "c")$value) /
-                   (wavelength * subset(sun.constants, label == "k")$value * temperature)) - 1))
+                 subset(sun.constants, label == "c")$value) /
+                (wavelength * subset(sun.constants, label == "k")$value *
+                 temperature)) - 1))
 
-   # Based on theory (i.e., Planck's law) we can calculate Solar output at the Sun and outside the Earth's atmosphere
+   # based on theory (i.e., Planck's law) we can calculate Solar output
+   # at the surface of the Sun as well as outside the Earth's atmosphere
    theory <-
-      data.frame(wavelength = wavelength,
-                 #####################################################
-                 ### Characteristics of sunlight at the Sun's surface
-                 Sun.spectralradiance = spectralradiance,
-                 Sun.spectralradiance.powerterm =
-                    ((2 * pi * subset(sun.constants, label == "h")$value *
-                         subset(sun.constants, label == "c")$value^2) / (wavelength^5)),
-                 Sun.spectralradiance.expterm =
-                    (1 / (exp((subset(sun.constants, label == "h")$value *
-                                  subset(sun.constants, label == "c")$value) /
-                                 (wavelength * subset(sun.constants, label == "k")$value *
-                                     temperature)) - 1)),
-                 # spectral radiance numerically integrated using trapezoidal approx
-                 Sun.spectralradiance.trapz =
-                    c(0, common::trapz(wavelength, spectralradiance)),
-                 # radiance (total radiant power) units of \watt\per\square\metre
-                 Sun.radiance =
-                    cumsum(c(0, common::trapz(wavelength, spectralradiance))),
-                 # luminosity (total radiance times surface area) units of \watt
-                 Sun.luminosity =
-                    sum(c(0, common::trapz(wavelength, spectralradiance))) *
-                    subset(sun.constants, label == "A.Sun")$value,
-                 ############################################################################
-                 ### Characteristics of sunlight at (immediately outside) Earth's atmosphere
-                 E.spectralradiance = factor.inversesquare * spectralradiance,
-                 E.spectralradiance.trapz =
-                    c(0, common::trapz(wavelength, factor.inversesquare * spectralradiance)),
-                 E.radiance =
-                    cumsum(c(0, common::trapz(wavelength,
-                                      factor.inversesquare * spectralradiance))),
-                 # total luminosity hitting Earth's surface (day-side)
-                 E.luminosity =
-                    sum(c(0, common::trapz(wavelength,
-                                   factor.inversesquare * spectralradiance))) *
-                    0.5 * subset(sun.constants, label == "A.Earth")$value)
+      data.frame(
+         wavelength = wavelength,
+         #####################################################
+         ### Characteristics of sunlight at the Sun's surface
+         Sun.spectralradiance = spectralradiance,
+         Sun.spectralradiance.powerterm =
+            ((2 * pi * subset(sun.constants, label == "h")$value *
+              subset(sun.constants, label == "c")$value^2) / (wavelength^5)),
+         Sun.spectralradiance.expterm =
+            (1 / (exp((subset(sun.constants, label == "h")$value *
+                       subset(sun.constants, label == "c")$value) /
+                      (wavelength * subset(sun.constants, label == "k")$value *
+                       temperature)) - 1)),
+         # spectral radiance numerically integrated using trapezoidal approx
+         Sun.spectralradiance.trapz =
+            c(0, common::trapz(wavelength, spectralradiance)),
+         # radiance (total radiant power) units of \watt\per\square\metre
+         Sun.radiance =
+            cumsum(c(0, common::trapz(wavelength, spectralradiance))),
+         # luminosity (total radiance times surface area) units of \watt
+         Sun.luminosity =
+            sum(c(0, common::trapz(wavelength, spectralradiance))) *
+            subset(sun.constants, label == "A.Sun")$value,
+         ######################################################################
+         ### Characteristics of sunlight immediately outside Earth's atmosphere
+         E.spectralradiance = factor.inversesquare * spectralradiance,
+         E.spectralradiance.trapz =
+            c(0, common::trapz(wavelength, factor.inversesquare * spectralradiance)),
+         E.radiance =
+            cumsum(c(
+               0,
+               common::trapz(wavelength, factor.inversesquare * spectralradiance))),
+         # total luminosity hitting Earth's surface (day-side)
+         E.luminosity =
+            sum(c(
+               0,
+               common::trapz(wavelength, factor.inversesquare * spectralradiance))) *
+            0.5 * subset(sun.constants, label == "A.Earth")$value
+      )
 
    return(theory)
 }

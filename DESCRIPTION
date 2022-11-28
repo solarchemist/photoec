@@ -1,7 +1,7 @@
 Package: photoec
 Type: Package
 Title: Sunlight spectra for photoelectrochemistry
-Version: 0.2.2.9000
+Version: 0.2.3.9000
 Description: Calculate photon flux, current density, and solar-to-hydrogen
     efficiency based on ASTM G173-03 reference spectra (AM1.5G and friends) or based
     on black-body (Planck theory), for any wavelength (or energy) range.
@@ -11,16 +11,16 @@ Encoding: UTF-8
 LazyData: TRUE
 Imports:
    rlang,
-   common, 
-   dplyr, 
-   magrittr, 
-   stats, 
+   common,
+   dplyr,
+   magrittr,
+   stats,
    utils
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.1
 Depends:
     R (>= 2.10)
 VignetteBuilder: knitr
-Suggests: 
+Suggests:
    knitr,
    rmarkdown,
    constants,
