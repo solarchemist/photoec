@@ -33,6 +33,7 @@ solarconstants <- tribble(
    "Planck's constant",         "h.eV",     syms$hev,     "CODATA 2018",        "\\ensuremath{h_\\text{eV}}",    "\\si{\\electronvolt\\second}",
    "Boltzmann's constant",      "k",        syms$k,       "CODATA 2018",        "\\ensuremath{k}",               "\\si{\\joule\\per\\kelvin}",
    "Stefan-Boltzmann constant", "sigma",    syms$sigma0,  "CODATA 2018",        "\\ensuremath{\\sigma}",         "\\si{\\watt\\per\\square\\metre\\per\\kelvin\\tothe{4}}",
+   "Temperature of the Sun",    "T.Sun",    5772,         "NASA, Wikipedia",    "\\ensuremath{T_\\text{Sun}}",   "\\si{\\kelvin}",
    "Astronomical unit",         "R.AU",     149597870700, "per definition",     "\\ensuremath{R_\\text{AU}}",    "\\si{\\metre}",
    "Radius of the Sun",         "R.Sun",    695700000,    "Wikipedia",          "\\ensuremath{R_\\text{Sun}}",   "\\si{\\metre}",
    "Surface area of the Sun",   "A.Sun",    NA,           "A = 4*pi*R.Sun^2",   "\\ensuremath{A_\\text{Sun}}",   "\\si{\\square\\metre}",

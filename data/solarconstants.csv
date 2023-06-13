@@ -5,6 +5,7 @@
 "Planck's constant","h.eV",4.135667696e-15,"CODATA 2018","\ensuremath{h_\text{eV}}","\si{\electronvolt\second}"
 "Boltzmann's constant","k",1.380649e-23,"CODATA 2018","\ensuremath{k}","\si{\joule\per\kelvin}"
 "Stefan-Boltzmann constant","sigma",5.670374419e-08,"CODATA 2018","\ensuremath{\sigma}","\si{\watt\per\square\metre\per\kelvin\tothe{4}}"
+"Temperature of the Sun","T.Sun",5772,"NASA, Wikipedia","\ensuremath{T_\text{Sun}}","\si{\kelvin}"
 "Astronomical unit","R.AU",149597870700,"per definition","\ensuremath{R_\text{AU}}","\si{\metre}"
 "Radius of the Sun","R.Sun",695700000,"Wikipedia","\ensuremath{R_\text{Sun}}","\si{\metre}"
 "Surface area of the Sun","A.Sun",6082104402130211840,"A = 4*pi*R.Sun^2","\ensuremath{A_\text{Sun}}","\si{\square\metre}"
