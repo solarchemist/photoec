@@ -7,11 +7,12 @@ cff-version: 1.2.0
 message: 'To cite package "photoec" in publications, please use the metadata from this file'
 type: software
 license: GPL-3.0-or-later
-title: 'Sunlight spectra for photoelectrochemistry'
-version: 0.2.4.9000
+title: 'Solar spectra and constants for photoelectrochemistry'
+version: 0.3.0.9000
 abstract: Calculate photon flux, current density, and solar-to-hydrogen efficiency
   based on ASTM G173-03 reference spectra (AM1.5G and friends) or based on black-body
   (Planck theory), for any wavelength (or energy) range.
+  This package also contains a table of useful solar constants.
 authors:
 - family-names: Ahmed
   given-names: Taha
