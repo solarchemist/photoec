@@ -1,12 +1,17 @@
 # Solar spectra and constants for photoelectrochemistry
 
+<!-- badges: start -->
+[![DOI](https://raw.githubusercontent.com/solarchemist/photoec/master/man/figures/badge-doi.svg)](https://doi.org/10.5281/zenodo.8034780)
+[![Vignette](https://raw.githubusercontent.com/solarchemist/photoec/master/man/figures/badge-vignette.svg)](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/photoec.html)
+<!-- badges: end -->
+
 With functions for calculating photon flux, current density, and solar-to-hydrogen
 efficiency based on either the ASTM G173-03 reference spectrum (AM1.5G) or
 on the black-body radiation (Planck theory), for relevant wavelength ranges.
 
 This package includes a dataframe of relevant solar constants.
 These constants are show-cased in the
-[**package vignette**](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/photoec.html)
+[**package vignette**](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/photoec.html).
 
 
 ## Install this package
@@ -59,6 +64,20 @@ Duration: 18.5s
 + Manually remove the line `doc` from `.gitignore` (the build step keeps adding it).
 
 Contributions are welcome, no matter if code, bug reports or suggestions!
+
+
+## Citation
+
+To cite `photoec` in publications use:
+
+Taha Ahmed (2023). The photoec package: solar spectra and constants for photoelectrochemistry.
+DOI: [10.5281/zenodo.8034780](https://doi.org/10.5281/zenodo.8034780).
+
+Or see the `CITATION.cff` ([citation file format](https://citation-file-format.github.io/))
+file in this repo or in the sidebar.
+Please note that the DOI above always resolves to the latest release of this package.
+If you want to explicitly cite a particular version, please use the corresponding DOI
+(listed on the [Zenodo record page](https://zenodo.org/record/8034781)).
 
 
 ## Suggested future work
