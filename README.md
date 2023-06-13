@@ -63,17 +63,7 @@ Contributions are welcome, no matter if code, bug reports or suggestions!
 
 ## Suggested future work
 
-Consider scrapping your own definition of universal constants in favour of those
-defined in other packages, such as
-
-+ https://cran.r-project.org/web/packages/NISTunits/index.html
-+ https://cran.r-project.org/web/packages/constants/index.html
-
-Consider scrapping your own unit converters in favour of, such as
-
-+ https://www.rdocumentation.org/packages/ChargeTransport/versions/1.0.2/topics/energyConversion
-+ https://www.rdocumentation.org/packages/ChargeTransport/versions/1.0.2/topics/universalConstants
-+ https://cran.r-project.org/web/packages/units/index.html
+Consider scrapping our own unit converters in favour of [units](https://cran.r-project.org/web/packages/units/index.html).
 
 
 ## Refs
