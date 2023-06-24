@@ -1,32 +1,12 @@
-
----
-title: "Updating the solar constants data"
-author: "Taha Ahmed"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Updating the solar constants data}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
-
-
-This vignette is just a way to document (and demonstrate) how to make
-changes to the dataset `solarconstants` which is a core part of this
-package.
-
-
-```{r packages, echo=T, message=FALSE}
+## ----packages, echo=T, message=FALSE------------------------------------------
 library(dplyr)
 library(knitr)
 library(usethis)   # use_data()
 library(tibble)    # tribble()
 library(constants) # syms
 library(here)      # here()
-```
 
-
-```{r global_options, echo=T, message=FALSE}
+## ----global_options, echo=T, message=FALSE----------------------------------------
 options(
    digits   = 7,
    width    = 84,
@@ -43,11 +23,8 @@ opts_chunk$set(
    message    = FALSE,
    warning    = FALSE,
    tidy       = FALSE)
-```
 
-
-
-```{r solarconstants}
+## ----solarconstants---------------------------------------------------------------
 solarconstants <- tribble(
    ~name,                       ~label,     ~value,       ~reference,           ~label.tex,                      ~unit.tex,
    "Speed of light",            "c",        syms$c0,      "per definition",     "\\ensuremath{c}",               "\\si{\\metre\\per\\second}",
@@ -76,41 +53,22 @@ solarconstants <-
          value,
          label == "A.Earth",
          4 * pi * (solarconstants %>% filter(label == "R.Earth") %>% pull(value))^2))
-```
 
-ASTM G173, defined by ASTM, published by NREL. See links below.
-For the Earth radius we are using the globally-average radius as defined by the
-International Union of Geodesy and Geophysics (see Wikipedia link below).
-
-
-```{r ASTMG173}
+## ----ASTMG173---------------------------------------------------------------------
 # the CSV file we downloaded from NREL is saved in inst/extdata (it's not modified by this script)
 ASTMG173 <- read.csv(
-   file = here("inst/extdata", "ASTMG173.csv"),
+   file = here::here("inst/extdata", "ASTMG173.csv"),
    skip = 1,
    col.names = c(
       "wavelength",          # nm
       "extraterrestrial",    # W m⁻² nm⁻¹
       "globaltilt",          # W m⁻² nm⁻¹
       "direct.circumsolar")) # W m⁻² nm⁻¹
-```
 
-
-```{r, echo=T}
+## ---- echo=T----------------------------------------------------------------------
 # use_data() saves each object as rda file in ./data/
 usethis::use_data(solarconstants, ASTMG173, overwrite = TRUE)
 # also save the dataset as csv files, for ease of reading
-write.csv(solarconstants, file = here("data", "solarconstants.csv"), row.names = FALSE)
-write.csv(ASTMG173, file = here("data", "ASTMG173.csv"), row.names = FALSE)
-```
+write.csv(solarconstants, file = here::here("data", "solarconstants.csv"), row.names = FALSE)
+write.csv(ASTMG173, file = here::here("data", "ASTMG173.csv"), row.names = FALSE)
 
-
-## Links
-
-+ https://www.astm.org/Standards/G173.htm
-+ https://www.nrel.gov/grid/solar-resource/spectra.html
-+ https://www.nrel.gov/grid/solar-resource/spectra-am1.5.html
-+ https://www.nrel.gov/grid/solar-resource/smarts.html
-+ https://en.wikipedia.org/w/index.php?title=Solar_radius&oldid=1157013422
-+ https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html
-+ https://en.wikipedia.org/w/index.php?title=Sun&oldid=1158468773

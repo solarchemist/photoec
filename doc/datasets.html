@@ -12,9 +12,9 @@
 
 <meta name="author" content="Taha Ahmed" />
 
-<meta name="date" content="2023-06-14" />
+<meta name="date" content="2023-06-24" />
 
-<title>Updating the solar constants data</title>
+<title>How to update the datasets</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -338,15 +338,16 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Updating the solar constants data</h1>
+<h1 class="title toc-ignore">How to update the datasets</h1>
 <h4 class="author">Taha Ahmed</h4>
-<h4 class="date">2023-06-14</h4>
+<h4 class="date">2023-06-24</h4>
 
 
 
-<p>This vignette is just a way to document (and demonstrate) how to make
-changes to the dataset <code>solarconstants</code> which is a core part
-of this package.</p>
+<p>This vignette demonstrates how the <code>solarconstants</code>
+datasets is created. It also shows how the <code>ASTMG173</code> dataset
+is ingested (from CSV), so if you for some reason want to edit that
+dataset, just edit the CSV and re-run this vignette.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(usethis)   <span class="co"># use_data()</span></span>
@@ -369,6 +370,7 @@ of this package.</p>
 <span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>   <span class="at">message    =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>   <span class="at">warning    =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>   <span class="at">tidy       =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>This is the <code>solarconstants</code> dataset:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>solarconstants <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>   <span class="sc">~</span>name,                       <span class="sc">~</span>label,     <span class="sc">~</span>value,       <span class="sc">~</span>reference,           <span class="sc">~</span>label.tex,                      <span class="sc">~</span>unit.tex,</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>   <span class="st">&quot;Speed of light&quot;</span>,            <span class="st">&quot;c&quot;</span>,        syms<span class="sc">$</span>c0,      <span class="st">&quot;per definition&quot;</span>,     <span class="st">&quot;</span><span class="sc">\\</span><span class="st">ensuremath{c}&quot;</span>,               <span class="st">&quot;</span><span class="sc">\\</span><span class="st">si{</span><span class="sc">\\</span><span class="st">metre</span><span class="sc">\\</span><span class="st">per</span><span class="sc">\\</span><span class="st">second}&quot;</span>,</span>
@@ -403,7 +405,7 @@ the International Union of Geodesy and Geophysics (see Wikipedia link
 below).</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># the CSV file we downloaded from NREL is saved in inst/extdata (it&#39;s not modified by this script)</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>ASTMG173 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>   <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;inst/extdata&quot;</span>, <span class="st">&quot;ASTMG173.csv&quot;</span>),</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>   <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;inst/extdata&quot;</span>, <span class="st">&quot;ASTMG173.csv&quot;</span>),</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>   <span class="at">skip =</span> <span class="dv">1</span>,</span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>   <span class="at">col.names =</span> <span class="fu">c</span>(</span>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>      <span class="st">&quot;wavelength&quot;</span>,          <span class="co"># nm</span></span>
@@ -413,8 +415,8 @@ below).</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># use_data() saves each object as rda file in ./data/</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_data</span>(solarconstants, ASTMG173, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co"># also save the dataset as csv files, for ease of reading</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">write.csv</span>(solarconstants, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;solarconstants.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">write.csv</span>(ASTMG173, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;ASTMG173.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">write.csv</span>(solarconstants, <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;solarconstants.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">write.csv</span>(ASTMG173, <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;ASTMG173.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <div id="links" class="section level2">
 <h2>Links</h2>
 <ul>

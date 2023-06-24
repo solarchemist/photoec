@@ -1,19 +1,20 @@
 
 ---
-title: "Updating the solar constants data"
+title: "How to update the datasets"
 author: "Taha Ahmed"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Updating the solar constants data}
+  %\VignetteIndexEntry{How to update the datasets}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 
-This vignette is just a way to document (and demonstrate) how to make
-changes to the dataset `solarconstants` which is a core part of this
-package.
+This vignette demonstrates how the `solarconstants` datasets is created.
+It also shows how the `ASTMG173` dataset is ingested (from CSV), so if you
+for some reason want to edit that dataset, just edit the CSV and re-run this
+vignette.
 
 
 ```{r packages, echo=T, message=FALSE}
@@ -46,6 +47,7 @@ opts_chunk$set(
 ```
 
 
+This is the `solarconstants` dataset:
 
 ```{r solarconstants}
 solarconstants <- tribble(
@@ -86,7 +88,7 @@ International Union of Geodesy and Geophysics (see Wikipedia link below).
 ```{r ASTMG173}
 # the CSV file we downloaded from NREL is saved in inst/extdata (it's not modified by this script)
 ASTMG173 <- read.csv(
-   file = here("inst/extdata", "ASTMG173.csv"),
+   file = here::here("inst/extdata", "ASTMG173.csv"),
    skip = 1,
    col.names = c(
       "wavelength",          # nm
@@ -100,8 +102,8 @@ ASTMG173 <- read.csv(
 # use_data() saves each object as rda file in ./data/
 usethis::use_data(solarconstants, ASTMG173, overwrite = TRUE)
 # also save the dataset as csv files, for ease of reading
-write.csv(solarconstants, file = here("data", "solarconstants.csv"), row.names = FALSE)
-write.csv(ASTMG173, file = here("data", "ASTMG173.csv"), row.names = FALSE)
+write.csv(solarconstants, file = here::here("data", "solarconstants.csv"), row.names = FALSE)
+write.csv(ASTMG173, file = here::here("data", "ASTMG173.csv"), row.names = FALSE)
 ```
 
 

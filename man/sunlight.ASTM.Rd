@@ -12,24 +12,16 @@ sunlight.ASTM(
 \arguments{
 \item{wavelength}{defaults to the wavelength values used in the G173-03 model}
 
-\item{model}{defaults to empty string, accepts "AM1.5G", "AM0", or "DNCS"}
+\item{model}{accepts empty string (default), or "AM1.5G", "AM0", or "DNCS"}
 }
 \value{
-NOTE: which columns are returned depends on the argument model = ...
+NOTE: which model is returned depends on the "model" argument
     \describe{
        \item{wavelength}{Wavelength, in nm}
-       \item{AM0.spectralirradiance}{W m-2 nm-1}
-       \item{AM1.5G.spectralirradiance}{W m-2 nm-1}
-       \item{DNCS.spectralirradiance}{W m-2 nm-1}
-       \item{AM0.spectralirradiance.trapz}{W m-2}
-       \item{AM1.5G.spectralirradiance.trapz}{W m-2}
-       \item{DNCS.spectralirradiance.trapz}{W m-2}
-       \item{AM0.irradiance}{W m-2}
-       \item{AM1.5G.irradiance}{W m-2}
-       \item{DNCS.irradiance}{W m-2}
-       \item{AM0.irradiance.fraction}{fraction}
-       \item{AM1.5G.irradiance.fraction}{fraction}
-       \item{DNCS.irradiance.fraction}{fraction}
+       \item{<model>.spectralirradiance}{W m-2 nm-1}
+       \item{<model>.spectralirradiance.trapz}{W m-2}
+       \item{<model>.irradiance}{W m-2}
+       \item{<model>.irradiance.fraction}{fraction}
     }
 }
 \description{

@@ -3,4 +3,7 @@
 .RData
 .Ruserdata
 *.Rproj
+.Rprofile
+renv.lock
+/renv/
 /Meta/

@@ -18,7 +18,11 @@ NULL
 
 #' @name ASTMG173
 #' @title ASTM G173-03 reference spectra
-#' @description ASTM G173-03 reference spectra, derived from SMARTS v2.9.2
+#' @description ASTM G173-03 reference spectra, derived from SMARTS v2.9.2.
+#'     This dataset has at best a wavelength step of 0.5 nm:
+#'     + 280 nm  -- 400 nm, step 0.5 nm
+#'     + 400 nm  -- 1700 nm, step 1.0 nm (there is also a datapoint at 1702 nm)
+#'     + 1705 nm -- 4000 nm, step 5 nm
 #' @docType data
 #' @format A data frame with 2002 rows and 4 variables:
 #' \describe{

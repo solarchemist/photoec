@@ -2,16 +2,12 @@
 
 <!-- badges: start -->
 [![DOI](https://raw.githubusercontent.com/solarchemist/photoec/master/man/figures/badge-doi.svg)](https://doi.org/10.5281/zenodo.8034780)
-[![Vignette](https://raw.githubusercontent.com/solarchemist/photoec/master/man/figures/badge-vignette.svg)](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/photoec.html)
+[![Vignettes](https://raw.githubusercontent.com/solarchemist/photoec/master/man/figures/badge-vignette.svg)](https://github.com/solarchemist/photoec#read-the-vignettes)
 <!-- badges: end -->
 
 With functions for calculating photon flux, current density, and solar-to-hydrogen
 efficiency based on either the ASTM G173-03 reference spectrum (AM1.5G) or
 on the black-body radiation (Planck theory), for relevant wavelength ranges.
-
-This package includes a dataframe of relevant solar constants.
-These constants are show-cased in the
-[**package vignette**](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/photoec.html).
 
 
 ## Install this package
@@ -40,8 +36,8 @@ I suggest the following package rebuild procedure (in RStudio IDE):
   Should complete with one note about `undefined global functions or variables: label`
   but no warnings nor errors:
 ```
-── R CMD check results ───────────────────────────────────────────── photoec 0.2.3.9000 ────
-Duration: 18.5s
+── R CMD check results ───────────────────────────────────────────── photoec 0.4.0.9000 ────
+Duration: 17.3s
 
 ❯ checking R code for possible problems ... NOTE
   currentdensity: no visible binding for global variable ‘label’
@@ -63,10 +59,20 @@ Duration: 18.5s
   about the vignette title being different from the package title (safe to ignore).
 + Manually remove the line `doc` from `.gitignore` (the build step keeps adding it).
 
-Contributions are welcome, no matter if code, bug reports or suggestions!
+Contributions are welcome, no matter whether code, bug reports or suggestions!
 
 
-## Citation
+## Read the vignettes
+
+This package includes two datasets: `solarconstants` a dataframe of some solar constants,
+and `ASTMG173` the ASTM G173-03 reference solar spectra.
+
++ The [first vignette demonstrates how to update the datasets in this package](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/datasets.html),
+  and also show-cases the `solarconstants` dataset.
++ The [second vignette show-cases the solar spectra](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/solar-spectra.html).
+
+
+## Citing this package
 
 To cite `photoec` in publications use:
 
@@ -77,7 +83,7 @@ Or see the `CITATION.cff` ([citation file format](https://citation-file-format.g
 file in this repo or in the sidebar.
 Please note that the DOI above always resolves to the latest release of this package.
 If you want to explicitly cite a particular version, please use the corresponding DOI
-(listed on the [Zenodo record page](https://zenodo.org/record/8034781)).
+(listed on the [Zenodo page](https://doi.org/10.5281/zenodo.8034780)).
 
 
 ## Suggested future work
@@ -85,6 +91,6 @@ If you want to explicitly cite a particular version, please use the correspondin
 Consider scrapping our own unit converters in favour of [units](https://cran.r-project.org/web/packages/units/index.html).
 
 
-## Refs
+## Links and notes
 
 + https://cran.r-project.org/web/views/ChemPhys.html
