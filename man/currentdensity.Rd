@@ -4,29 +4,37 @@
 \alias{currentdensity}
 \title{Calculate short-circuit current density}
 \usage{
-currentdensity(
-  wavelength,
-  photonflux.csum,
-  quantum.efficiency = 1,
-  bandgap = 1.23
-)
+currentdensity(energy, photonflux, EQE = 1, bandgap = 1.23)
 }
 \arguments{
-\item{wavelength, }{in nanometer}
+\item{energy, }{energy/eV, numeric vector}
 
-\item{photonflux.csum, }{s-1 m-2}
+\item{photonflux, }{cumulative photon flux/s⁻¹ m⁻², vector}
 
-\item{quantum.efficiency, }{between 0 and 1}
+\item{EQE, }{external quantum efficiency, numeric (0 - 1)}
 
-\item{bandgap, }{in eV (equivalent to electrode potential)}
+\item{bandgap, }{band gap of photoabsorber, numeric/eV (equivalent to electrode potential)}
 }
 \value{
-dataframe: energy (eV), wavelength (nm), and current density (A m-2)
+dataframe with 3 columns:
+   \describe{
+      \item{energy}{energy/eV, same as input vector}
+      \item{currentdensity}{current density/mA cm⁻² (or equivalently, A m⁻²)}
+      \item{currentdensity.fraction}{relative current density}
+   }
 }
 \description{
-Calculate the short-circuit current density (Jsc) from wavelength and photon flux.
+Note that for the sake of following convention this function
+   uses energy (in eV) rather than wavelength as its x-axis.
 }
 \details{
-If you use this function together with STH(), set the 
-  quantum.efficiency only once, either here or in \code{\link{STH}}.
+Calculate short-circuit (maximum) current density (Jsc) from the photon flux.
+}
+\examples{
+\dontrun{
+   currentdensity(
+      energy = photoec::sunlight.ASTM(model="AM1.5G")$energy,
+      photonflux = photoec::sunlight.ASTM(model="AM1.5G")[["AM1.5G.photonflux"]]
+   )
+}
 }

@@ -2,30 +2,46 @@
 % Please edit documentation in R/STH.R
 \name{STH}
 \alias{STH}
-\title{Calculate maximium solar-to-hydrogen efficiency}
+\title{Calculate maximum solar-to-hydrogen efficiency}
 \usage{
 STH(
-  wavelength,
+  energy,
   currentdensity,
-  total.irradiance = max(photoec::sunlight.ASTM(model = "AM1.5G")$irradiance),
+  max.irradiance = 1000.371,
+  model = "AM1.5G",
   electrode.potential = 1.23,
   faradaic.efficiency = 1
 )
 }
 \arguments{
-\item{wavelength, }{in nanometer}
+\item{energy, }{energy/eV, numeric vector}
 
-\item{currentdensity, }{in A m-2}
+\item{currentdensity, }{current density/mA cm⁻²}
 
-\item{total.irradiance, }{in W m-2 (note: scalar, not vector)}
+\item{max.irradiance, }{total irradiance (for specified model)/W m⁻², numeric scalar.
+Note that `max.irradiance` only takes precedence if model = ""}
 
-\item{electrode.potential, }{in eV (note: scalar, not vector)}
+\item{model, }{ASTM model: "AM1.5G" (default), "AM0", or "DNCS"}
 
-\item{faradaic.efficiency}{scalar, not vector}
+\item{electrode.potential, }{electrode potential/eV, numeric scalar}
+
+\item{faradaic.efficiency}{Faradaic efficiency, numeric (0 - 1)}
 }
 \value{
-dataframe with 3 columns: : energy (eV), wavelength (nm), and current density (A m-2)
+dataframe with 2 columns:
+    \describe{
+       \item{energy}{energy/eV, same as input vector}
+       \item{STH}{STH/\%}
+    }
 }
 \description{
 Calculate the maximum STH efficiency
+}
+\examples{
+\dontrun{
+   STH(
+      energy = photoec::sunlight.ASTM(model = model)$energy,
+      currentdensity = photoec::sunlight.ASTM(model = model)[[paste0(model, ".currentdensity")]]
+   )
+}
 }

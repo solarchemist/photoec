@@ -36,16 +36,18 @@ I suggest the following package rebuild procedure (in RStudio IDE):
   Should complete with one note about `undefined global functions or variables: label`
   but no warnings nor errors:
 ```
-── R CMD check results ───────────────────────────────────────────── photoec 0.4.0.9000 ────
+── R CMD check results ───────────────────────────────────────────── photoec 0.4.1.9000 ────
 Duration: 17.3s
 
 ❯ checking R code for possible problems ... NOTE
+  cumflux: no visible binding for global variable ‘label’
   currentdensity: no visible binding for global variable ‘label’
   eV2nm: no visible binding for global variable ‘label’
   energy2wavelength: no visible binding for global variable ‘label’
   energy2wavenum: no visible binding for global variable ‘label’
+  flux: no visible binding for global variable ‘label’
   nm2eV: no visible binding for global variable ‘label’
-  photonflux: no visible binding for global variable ‘label’
+  sunlight.ASTM: no visible binding for global variable ‘label’
   sunlight.Planck: no visible binding for global variable ‘label’
   wavelength2energy: no visible binding for global variable ‘label’
   wavenum2energy: no visible binding for global variable ‘label’

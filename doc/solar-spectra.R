@@ -6,6 +6,8 @@ library(knitr)
 library(ggplot2)
 library(latex2exp)
 library(cowplot)
+library(ggrepel)
+library(gt)
 library(here)
 
 ## ----global_options, echo=T, message=FALSE----------------------------------------
@@ -33,143 +35,6 @@ opts_chunk$set(
    warning    = FALSE,
    tidy       = FALSE)
 
-## ----echo=FALSE-------------------------------------------------------------------
-sunlight.ASTM <- function(
-   wavelength = c(seq(280, 400, 0.5), seq(401, 1700, 1), 1702, seq(1705, 4000, 5)),
-   model = "") {
-
-   #### Check args
-   # Check that wavelength limits lies within 280 nm and 4000 nm
-   if ((min(wavelength) < 280) || (max(wavelength) > 4000)) {
-      stop(paste0(
-         "ASTM model does not extend beyond 280 nm -- 4000 nm.\n",
-         "Please adjust your wavelength range to lie within this limit."))
-   }
-   # Check that model is one of the allowed or empty string
-   models.dataset <- c("AM0", "AM1.5G", "DNCS")
-   models.allowed <- c(models.dataset, "")
-   stopifnot(model %in% models.allowed)
-
-   astm <- list()
-   astm[["dataset"]] <- photoec::ASTMG173
-   # rename column names in ASTMG173
-   # note that this assignment is fragile; relies on column order in ASTMG173 not changing
-   names(astm[["dataset"]]) <- c("wavelength", "AM0", "AM1.5G", "DNCS")
-
-
-   # The following approach was decided based on discussions with Pavlin Mitev and
-   # Seif Alwan - much appreciated guys. Code is my own, any mistakes are my own.
-   # Ok, step through the user-submitted wavelength vector (element-by-element)
-   # If wavelength matches one already existing in ASTMG173 dataframe,
-   # return AM0, AM1.5G and DNCS values for that wavelength - done!
-   # If wavelength does not match, find straddling values in ASTMG173 dataframe
-   # and use linear interpolation to calculate new AM0, AM1.5G and DNCS values.
-   astm[["interp"]] <- data.frame(
-      wavelength = NULL,
-      AM0        = NULL,
-      AM1.5G     = NULL,
-      DNCS       = NULL)
-   # tolerance for comparing floats
-   epsilon <- 0.01 # nanometers
-   for (i in 1:length(wavelength)) {
-      if (any(abs(wavelength[i] - astm[["dataset"]]$wavelength) <= epsilon)) {
-         # if wavelength[i] matches in astm[["dataset"]]
-         astm[["interp"]] <- rbind(
-            astm[["interp"]],
-            astm[["dataset"]][which(abs(wavelength[i] - astm[["dataset"]]$wavelength) <= epsilon), ])
-      } else {
-         # wavelength does not match any already existing, so find
-         # value just-smaller and just-larger in source dataframe
-         row.no.smaller.point <- utils::tail(which(astm[["dataset"]]$wavelength < wavelength[i]), 1)
-         row.no.larger.point <- utils::head(which(astm[["dataset"]]$wavelength > wavelength[i]), 1)
-         inflection <- astm[["dataset"]][c(row.no.smaller.point, row.no.larger.point), ]
-
-         # interpolate AM0, AM1.5G, and DNCS...
-         astm[["interp"]] <- rbind(
-            astm[["interp"]],
-            data.frame(
-               wavelength = wavelength[i],
-               AM0 = stats::approx(
-                  x = inflection$wavelength,
-                  y = inflection$AM0,
-                  method = "linear",
-                  xout = wavelength[i])$y,
-               AM1.5G = stats::approx(
-                  x = inflection$wavelength,
-                  y = inflection$AM1.5G,
-                  method = "linear",
-                  xout = wavelength[i])$y,
-               DNCS = stats::approx(
-                  x = inflection$wavelength,
-                  y = inflection$DNCS,
-                  method = "linear",
-                  xout = wavelength[i])$y))
-      }
-   }
-
-   # reset row.names of astm[["interp"]]
-   row.names(astm[["interp"]]) <- seq(1, dim(astm[["interp"]])[1])
-
-   # So now we have spectral irradiances according to AM0, AM1.5G and DNCS.
-   # We will now calculate integrated spectral irradiance (trapz) and irradiance (cumulative).
-
-   # integrate trapz for each model and assign to new columns
-   for (k in 2:dim(astm$interp)[2]) {
-      astm$interp[[paste0(names(astm$interp)[k], ".trapz")]] <- c(
-         0,
-         common::trapz(astm$interp$wavelength, astm$interp[, k]))
-   }
-
-   # based on the integrated values, calculate cumulative irradiance and assign to new columns
-   for (k in 5:dim(astm[["interp"]])[2]) {
-      irradiance <- rep(0, dim(astm[["interp"]])[1])
-      for (j in 2:dim(astm[["interp"]])[1]) {
-         irradiance[j] <- irradiance[j - 1] + astm[["interp"]][j, k]
-      }
-      astm[["interp"]] <- cbind(astm[["interp"]], irradiance)
-      colnames(astm[["interp"]])[dim(astm[["interp"]])[2]] <- paste0(
-         sub(
-            pattern = "\\.[a-z]+$",
-            replacement = "",
-            x = names(astm[["interp"]])[k-3]),
-         ".irradiance")
-   }
-
-   # based on cumulative irradiance, calculate irradiance fraction and assign to new columns
-   for (k in 8:dim(astm[["interp"]])[2]) {
-      astm[["interp"]] <- cbind(
-         astm[["interp"]],
-         astm[["interp"]][, k] / utils::tail(astm[["interp"]][, k], 1))
-      colnames(astm[["interp"]])[dim(astm[["interp"]])[2]] <-
-         paste0(names(astm[["interp"]])[k], ".fraction")
-   }
-
-
-   # return block
-   if (!(model %in% models.dataset)) {
-      # if arg "model" is not equal to any of models.dataset, return all three models.
-      return(cbind(
-         energy = photoec::wavelength2energy(astm[["interp"]]$wavelength),
-         astm[["interp"]]))
-   } else {
-      # otherwise return only the requested model
-      astm[[model]] <- cbind(
-         model = model,
-         energy = photoec::wavelength2energy(astm[["interp"]]$wavelength),
-         astm[["interp"]][, c(
-            1,
-            grep(
-               pattern = paste0("^", model),
-               x = names(astm[["interp"]])))])
-      # remove the model label from all column names (unnecessary distinction with only one model)
-      names(astm[[model]]) <- sub(
-         pattern = paste0("^", model, "."),
-         replacement = "",
-         x = names(astm[[model]]))
-      return(astm[[model]])
-   }
-}
-
 ## ----dataset, echo=TRUE, results="markup"-----------------------------------------
 dataset <- photoec::ASTMG173
 dataset %>% glimpse()
@@ -185,7 +50,7 @@ datalong <- dataset %>% pivot_longer(
    cols = !starts_with("wavelength"),
    names_to = "model",
    values_to = "value") %>%
-   mutate(property = "spectral.irradiance")
+   mutate(property = "spectralirradiance")
 datalong %>% glimpse()
 
 ## ----astmg173-dataset, echo=FALSE-------------------------------------------------
@@ -202,7 +67,7 @@ ggplot(datalong) +
          ~ 1239.842 / .,
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5))) +
-   scale_y_continuous(name = "Spectral irradiance / (W/m²/nm)") +
+   scale_y_continuous(name = "Spectral irradiance / W m⁻² nm⁻¹") +
    labs(
       title = "ASTM G173-03 reference solar spectra",
       # note that <code></code> (i.e., ``) is not supported yet by ggtext
@@ -213,7 +78,7 @@ ggplot(datalong) +
       legend.justification = c(1, 1))
 
 ## ----astmg173-function, echo=FALSE------------------------------------------------
-dflong <- sunlight.ASTM() %>%
+dflong <- photoec::sunlight.ASTM() %>%
    pivot_longer(
       cols = !starts_with(c("wavelength", "energy")),
       names_to = "astm.colname",
@@ -223,15 +88,13 @@ dflong <- sunlight.ASTM() %>%
    # the "astm.colname" column
    mutate(model = sub("\\.[a-z]+(\\.[a-z]+)?", "", astm.colname)) %>%
    mutate(property = sub("^\\.", "", str_remove(astm.colname, model))) %>%
-   # this leaves spectral irradiance values with empty string in "property" column
-   mutate(property = ifelse(property == "", "spectral.irradiance", property)) %>%
    # with that we have successfully parsed the original column names and no longer
    # need the astm.colname column
    select(-astm.colname)
 dflong %>% glimpse()
 
 ## ----astm-function, echo=FALSE----------------------------------------------------
-ggplot(dflong %>% filter(property == "spectral.irradiance")) +
+ggplot(dflong %>% filter(property == "spectralirradiance")) +
    geom_line(linewidth = 0.2,
       aes(
          x = wavelength,
@@ -244,7 +107,7 @@ ggplot(dflong %>% filter(property == "spectral.irradiance")) +
          ~ 1239.842 / .,
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5))) +
-   scale_y_continuous(name = "Spectral irradiance / (W/m²/nm)") +
+   scale_y_continuous(name = "Spectral irradiance / W m⁻² nm⁻¹") +
    labs(
       title = "Reference solar spectra by photoec::sunlight.ASTM()",
       # note that <code></code> (i.e., ``) is not supported yet by ggtext
@@ -255,18 +118,52 @@ ggplot(dflong %>% filter(property == "spectral.irradiance")) +
       legend.justification = c(1, 1))
 
 ## ----diff-dataset-vs-function, echo=TRUE, results="markup"------------------------
-identical(
-   datalong %>% filter(model == "AM1.5G") %>% filter(property == "spectral.irradiance") %>% pull(value),
-   dflong %>% filter(model == "AM1.5G") %>% filter(property == "spectral.irradiance") %>% pull(value))
+dplyr::near(
+   datalong %>% filter(model == "AM1.5G") %>% filter(property == "spectralirradiance") %>% pull(value),
+   dflong %>% filter(model == "AM1.5G") %>% filter(property == "spectralirradiance") %>% pull(value)) %>% all()
 
 ## ----function-exploration, echo=FALSE---------------------------------------------
+# using facetting is not suitable because we have different y-axis for every plot...
+# ggplot(dflong) +
+#    facet_wrap(~property, scales = "free_y") +
+#    geom_line(
+#       aes(
+#          x = wavelength,
+#          y = value,
+#          colour = model)) +
+#    scale_x_continuous(
+#       name = "Wavelength / nm",
+#       breaks = c(250, 1000, 2000, 3000, 4000),
+#       sec.axis = sec_axis(
+#          ~ 1239.842 / .,
+#          name = "Energy / eV",
+#          breaks = c(4, 2, 1, 0.5))) +
+#    theme(
+#       legend.position = c(0.98, 0.02),
+#       legend.justification = c(1, 0))
+p.spirr <- ggplot(dflong %>% filter(property == "spectralirradiance")) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value,
+         colour = model)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      breaks = c(250, 1000, 2000, 3000, 4000),
+      sec.axis = sec_axis(
+         ~ 1239.842 / .,
+         name = "Energy / eV",
+         breaks = c(4, 2, 1, 0.5),
+         labels = c("4", "2", "1", "0.5"))) +
+   scale_y_continuous(name = "Sp. irradiance / W m⁻² nm⁻¹") +
+   theme(legend.position = "none")
 p.irr <- ggplot(dflong %>% filter(property == "irradiance")) +
    geom_line(
       aes(
          x = wavelength,
          y = value,
          colour = model)) +
-   geom_text(
+   geom_text_repel(
       data = dflong %>%
          filter(property == "irradiance") %>%
          select(model, wavelength, value) %>%
@@ -275,24 +172,28 @@ p.irr <- ggplot(dflong %>% filter(property == "irradiance")) +
          # which is total irradiance since irradiance is the cumulative spectral irradiance
          # https://stackoverflow.com/a/53994503/1198249
          slice(tail(row_number(), 1)),
-      hjust = 1.0, vjust = 1.4,
+      hjust = 1.0, vjust = 1.4, nudge_y = -100, size = 3.2,
+      segment.colour = NA,
       aes(
          x = wavelength,
          y = value,
          colour = model,
          label = paste0(
             formatC(value, digits = 5, format = "fg"),
-            " W/m²"))) +
+            " W m⁻²"))) +
    scale_x_continuous(
       name = "Wavelength / nm",
       breaks = c(250, 1000, 2000, 3000, 4000),
       sec.axis = sec_axis(
          ~ 1239.842 / .,
          name = "Energy / eV",
-         breaks = c(4, 2, 1, 0.5))) +
-   scale_y_continuous(name = "Irradiance / (W/m²)") +
+         breaks = c(4, 2, 1, 0.5),
+         labels = c("4", "2", "1", "0.5"))) +
+   scale_y_continuous(
+      name = "Irradiance / kW m⁻²",
+      labels = rlang::as_function(~ 1e-3 * .)) +
    theme(legend.position = "none")
-p.frac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
+p.irrfrac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
    geom_line(aes(x = wavelength, y = value, colour = model)) +
    scale_x_continuous(
       name = "Wavelength / nm",
@@ -300,18 +201,118 @@ p.frac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
       sec.axis = sec_axis(
          ~ 1239.842 / .,
          name = "Energy / eV",
-         breaks = c(4, 2, 1, 0.5))) +
+         breaks = c(4, 2, 1, 0.5),
+         labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(name = "Irradiance fraction") +
    theme(
       legend.position = c(0.98, 0.02),
       legend.justification = c(1, 0))
+##
+p.spflux <- ggplot(dflong %>% filter(property == "spectralphotonflux")) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value,
+         colour = model)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      breaks = c(250, 1000, 2000, 3000, 4000),
+      sec.axis = sec_axis(
+         ~ 1239.842 / .,
+         name = "Energy / eV",
+         breaks = c(4, 2, 1, 0.5),
+         labels = c("4", "2", "1", "0.5"))) +
+   scale_y_continuous(
+      name = "Sp. photon flux / 10¹⁸ s⁻¹ m⁻² nm⁻¹",
+      labels = rlang::as_function(~ 1e-18 * .)) +
+   theme(legend.position = "none")
+p.flux <- ggplot(dflong %>% filter(property == "photonflux")) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value,
+         colour = model)) +
+   geom_text_repel(
+      data = dflong %>%
+         filter(property == "photonflux") %>%
+         select(model, wavelength, value) %>%
+         group_by(model) %>%
+         # get the total flux value for each model
+         slice(tail(row_number(), 1)),
+      hjust = 1.0, vjust = 1.4, size = 3.2, nudge_y = -1e21,
+      segment.colour = NA,
+      aes(
+         x = wavelength,
+         y = value,
+         colour = model,
+         label = paste0(
+            sub(
+               "e+21", "", formatC(value, digits = 2, format = "e"),
+               fixed = TRUE),
+            "×10²¹ s⁻¹ m⁻²"))) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      breaks = c(250, 1000, 2000, 3000, 4000),
+      sec.axis = sec_axis(
+         ~ 1239.842 / .,
+         name = "Energy / eV",
+         breaks = c(4, 2, 1, 0.5),
+         labels = c("4", "2", "1", "0.5"))) +
+   scale_y_continuous(
+      name = "Photon flux / 10²¹ s⁻¹ m⁻²",
+      labels = rlang::as_function(~ 1e-21 * .)) +
+   theme(legend.position = "none")
+p.fluxfrac <- ggplot(dflong %>% filter(property == "photonflux.fraction")) +
+   geom_line(aes(x = wavelength, y = value, colour = model)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      breaks = c(250, 1000, 2000, 3000, 4000),
+      sec.axis = sec_axis(
+         ~ 1239.842 / .,
+         name = "Energy / eV",
+         breaks = c(4, 2, 1, 0.5),
+         labels = c("4", "2", "1", "0.5"))) +
+   scale_y_continuous(name = "Photon flux fraction") +
+   theme(legend.position = "none")
 # https://datavizpyr.com/join-multiple-plots-with-cowplot/
 cowtitle <- ggdraw() +
    draw_label(
-      "Cumulative irradiance in (a) absolute and (b) relative terms",
+      "Solar spectral irradiance and some derived properties",
       x = 0, hjust = 0, size = 14) +
    # manually adjusted title left-side margin to align with left plot panel
    theme(plot.margin = margin(0, 0, 0, 45))
-cowrow <- plot_grid(p.irr, p.frac, nrow = 1, labels = c("a", "b"))
-cowplot::plot_grid(cowtitle, cowrow, ncol = 1, rel_heights = c(0.1, 1))
+row.irr <- plot_grid(p.spirr, p.irr, p.irrfrac, nrow = 1, labels = c("a", "b", "c"), label_x = 0.15)
+row.flux <- plot_grid(p.spflux, p.flux, p.fluxfrac, nrow = 1, labels = c("d", "e", "f"), label_x = 0.15)
+cowplot::plot_grid(cowtitle, row.irr, row.flux, ncol = 1, rel_heights = c(0.1, 1, 1))
+
+## ----echo=FALSE, results="markup", size="tiny"------------------------------------
+photoec::sunlight.ASTM(model="AM1.5G") %>%
+   # limit to visible range
+   filter(wavelength >= 380 & wavelength <= 780) %>%
+   # display fewer rows (display only every 10th nm)
+   filter(wavelength %% 10 == 0) %>%
+   gt() %>%
+   # default table font size is 14 px
+   tab_options(table.font.size = px(12L)) %>%
+   tab_header(
+      title = "Spectral irradiance AM1.5G and derived properties",
+      subtitle = "In the visible range and showing only every 10th nm") %>%
+   cols_label(
+      wavelength = gt::html("&#955;/nm"),
+      energy = gt::html("E/eV"),
+      AM1.5G.spectralirradiance = gt::html("I<sub>&#955;</sub>/W m⁻² nm⁻¹"),
+      AM1.5G.irradiance = gt::html("I/W m⁻²"),
+      AM1.5G.irradiance.fraction = gt::html("I / I<sub>max</sub>"),
+      AM1.5G.spectralphotonflux = gt::html("Φ<sub>&#955;</sub>/s⁻¹ m⁻² nm⁻¹"),
+      # this is capital letter Phi https://symbl.cc/en/03A6/
+      AM1.5G.photonflux = gt::html("Φ/s⁻¹ m⁻²"),
+      AM1.5G.photonflux.fraction = gt::html("Φ / Φ<sub>max</sub>"),
+      AM1.5G.currentdensity = gt::html("j/mA cm⁻²"),
+      AM1.5G.solartohydrogen = gt::html("STH/%")) %>%
+   fmt_number(columns = energy, n_sigfig = 3) %>%
+   fmt_number(columns = contains("irradiance"), n_sigfig = 4) %>%
+   fmt_scientific(columns = contains("photonflux"), decimals = 2) %>%
+   fmt_number(columns = contains("fraction"), n_sigfig = 3) %>%
+   fmt_number(columns = AM1.5G.currentdensity, n_sigfig = 4) %>%
+   fmt_number(columns = AM1.5G.solartohydrogen, scale_by = 100, n_sigfig = 3)
 

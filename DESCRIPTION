@@ -1,7 +1,7 @@
 Package: photoec
 Type: Package
 Title: Solar spectra and constants for photoelectrochemistry
-Version: 0.4.0.9000
+Version: 0.4.1.9000
 Description: Calculate photon flux, current density, and solar-to-hydrogen
     efficiency based on ASTM G173-03 reference spectra (AM1.5G and friends) or based
     on black-body (Planck theory), for any wavelength (or energy) range.
@@ -14,6 +14,7 @@ Imports:
    common,
    dplyr,
    magrittr,
+   tibble,
    stats,
    utils
 RoxygenNote: 7.2.3
@@ -25,10 +26,11 @@ Suggests:
    rmarkdown,
    constants,
    here,
-   tibble,
    usethis,
    tidyr,
    stringr,
    ggplot2,
+   ggrepel,
    latex2exp,
-   cowplot
+   cowplot,
+   gt

@@ -17,11 +17,13 @@ sunlight.ASTM(
 \value{
 NOTE: which model is returned depends on the "model" argument
     \describe{
-       \item{wavelength}{Wavelength, in nm}
-       \item{<model>.spectralirradiance}{W m-2 nm-1}
-       \item{<model>.spectralirradiance.trapz}{W m-2}
-       \item{<model>.irradiance}{W m-2}
-       \item{<model>.irradiance.fraction}{fraction}
+       \item{wavelength}{Wavelength/nm}
+       \item{<model>.spectralirradiance}{Spectral irradiance/W m-2 nm-1}
+       \item{<model>.irradiance}{Cumulative irradiance/W m-2}
+       \item{<model>.irradiance.fraction}{Relative irradiance (0-1)}
+       \item{<model>.spectralphotonflux}{Spectral photon flux/s-1 m-2 nm-1}
+       \item{<model>.photonflux}{Cumulative photon flux/s-1 m-2}
+       \item{<model>.photonflux.fraction}{Relative photon flux (0-1)}
     }
 }
 \description{
@@ -35,6 +37,9 @@ Calculate the spectral irradiance of sunlight on Earth
 }
 \examples{
 \dontrun{
-sunlight.ASTM(wavelength = seq(400, 450, by = 0.1), model = "AM1.5G")
+    sunlight.ASTM()
+    sunlight.ASTM(model = "AM0")
+    sunlight.ASTM(wavelength = seq(400, 450, by = 0.1), model = "AM1.5G")
+    sunlight.ASTM(wavelength = seq(500, 600, by = 1))
 }
 }
