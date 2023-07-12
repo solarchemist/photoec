@@ -17,5 +17,5 @@ cumflux(wl.start = 280, wl.stop = 4000, model = "AM1.5G")
 the total flux across the wl range, number (vector if more than one range)
 }
 \description{
-DEPRECATED. please use \link{sunlight.ASTM()} instead.
+DEPRECATED. please use \code{\link{sunlight.ASTM}} instead.
 }

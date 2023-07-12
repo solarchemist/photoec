@@ -2,13 +2,15 @@
 #' @title Solar constants
 #' @description A dataset containing some constants related to sunlight.
 #' @docType data
-#' @format A data frame with 11 rows and 6 variables:
+#' @format A data frame with 12 rows and 8 variables:
 #' \describe{
 #'   \item{name}{Common name of constant}
-#'   \item{label}{Short label, useful for indexing}
+#'   \item{label}{Short label, useful as a unique identifier}
 #'   \item{value}{The numeric value of the constant}
 #'   \item{reference}{Reference, if any}
+#'   \item{label.html}{The label, HTML formatted (requires Unicode support)}
 #'   \item{label.tex}{The label, LaTeX formatted}
+#'   \item{unit.html}{The unit, HTML formatted (requires Unicode support)}
 #'   \item{unit.tex}{The unit, LaTeX formatted (using siunitx package v2)}
 #' }
 #' @source \url{http://physics.nist.gov/cuu/Constants/}

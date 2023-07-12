@@ -2,19 +2,39 @@
 % Please edit documentation in R/sunlightPlanck.R
 \name{sunlight.Planck}
 \alias{sunlight.Planck}
-\title{Calculate spectral radiance and other characteristics of a black-body}
+\title{Black body spectral radiance, radiance and luminosity}
 \usage{
-sunlight.Planck(wavelength, temperature = 5778)
+sunlight.Planck(
+  wavelength = seq(1e-07, 4e-06, 1e-09),
+  temperature = dplyr::filter(photoec::solarconstants, label == "T.Sun")$value
+)
 }
 \arguments{
-\item{wavelength}{vector, in meter}
+\item{wavelength}{wavelength/m, numeric vector
+Please note: expected unit is **meter** and *not* nanometer!}
 
-\item{temperature}{vector, blackbody surface temperature, in Kelvin}
+\item{temperature}{black body surface temperature/Kelvin, numeric scalar}
 }
 \value{
-dataframe
+dataframe with 9 columns:
+    \describe{
+       \item{wavelength}{Wavelength/nm}
+       \item{Sun.spectralradiance}{Spectral radiance of the black body per Planck's law/W m⁻² nm⁻¹}
+       \item{Sun.spectralradiance.powerterm}{Power term of Planck's law/W m⁻² nm⁻¹}
+       \item{Sun.spectralradiance.expterm}{Exponential term of Planck's law/1}
+       \item{Sun.radiance}{Cumulative radiance/W m⁻²}
+       \item{Sun.luminosity}{Luminosity of the spherical black body/W}
+       \item{Earth.spectralirradiance}{Spectral irradiance at a distance of 1 AU from the black body/W m⁻² nm⁻¹}
+       \item{Earth.irradiance}{Irradiance at a distance of 1 AU from the black body/W m⁻²}
+       \item{Earth.luminosity}{Luminosity impinging on Earth (hemisphere)/W}
+    }
 }
 \description{
-Calculate the spectral radiance for an ideal black-body
-    using Planck's law, for a specified wavelength range and step-size
+Calculate the spectral radiance, radiance and luminosity
+    for a black body with surface temperature \code{temperature} (e.g., the Sun
+    has a surface temperature of 5772 K) using Planck's law, for a
+    specified wavelength range.
+}
+\details{
+Calculate spectral radiance, radiance and luminosity of a black body
 }

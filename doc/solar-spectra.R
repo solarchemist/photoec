@@ -1,4 +1,4 @@
-## ----packages, echo=T, message=FALSE----------------------------------------------
+## ----packages, echo=FALSE, message=FALSE------------------------------------------
 library(dplyr)
 library(tidyr)
 library(stringr)  # str_remove
@@ -10,7 +10,7 @@ library(ggrepel)
 library(gt)
 library(here)
 
-## ----global_options, echo=T, message=FALSE----------------------------------------
+## ----global_options, echo=FALSE, message=FALSE------------------------------------
 options(
    digits   = 7,
    width    = 84,
@@ -122,7 +122,15 @@ dplyr::near(
    datalong %>% filter(model == "AM1.5G") %>% filter(property == "spectralirradiance") %>% pull(value),
    dflong %>% filter(model == "AM1.5G") %>% filter(property == "spectralirradiance") %>% pull(value)) %>% all()
 
-## ----function-exploration, echo=FALSE---------------------------------------------
+## ----function-exploration, echo=FALSE, fig.cap=caption.functionexploration--------
+caption.functionexploration <- paste(
+   "Quantities returned by the `sunlight.ASTM()` function for the AM0, AM1.5G and DNCS spectra:",
+   "**(a)** Solar spectral irradiance,",
+   "**(b)** cumulative irradiance,",
+   "**(c)** irradiance fraction,",
+   "**(d)** spectral photon flux,",
+   "**(e)** cumulative photon flux, and",
+   "**(f)** photon flux fraction.")
 # using facetting is not suitable because we have different y-axis for every plot...
 # ggplot(dflong) +
 #    facet_wrap(~property, scales = "free_y") +
@@ -155,7 +163,9 @@ p.spirr <- ggplot(dflong %>% filter(property == "spectralirradiance")) +
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
-   scale_y_continuous(name = "Sp. irradiance / W m⁻² nm⁻¹") +
+   # a complicated expression here to get the equivalent of $I_\mathrm{\lambda}$
+   # https://stackoverflow.com/questions/17334759/subscript-letters-in-ggplot-axis-label
+   scale_y_continuous(name = expression(italic("I")[λ]*" / W m⁻² nm⁻¹")) +
    theme(legend.position = "none")
 p.irr <- ggplot(dflong %>% filter(property == "irradiance")) +
    geom_line(
@@ -190,7 +200,7 @@ p.irr <- ggplot(dflong %>% filter(property == "irradiance")) +
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(
-      name = "Irradiance / kW m⁻²",
+      name = bquote(italic("I")~" / kW m⁻²"),
       labels = rlang::as_function(~ 1e-3 * .)) +
    theme(legend.position = "none")
 p.irrfrac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
@@ -203,7 +213,9 @@ p.irrfrac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
-   scale_y_continuous(name = "Irradiance fraction") +
+   scale_y_continuous(
+      # another complex expression, equivalent: $I/I_\mathrm{max}$
+      name = expression(italic("I")*" / "*italic("I")[max])) +
    theme(
       legend.position = c(0.98, 0.02),
       legend.justification = c(1, 0))
@@ -223,7 +235,8 @@ p.spflux <- ggplot(dflong %>% filter(property == "spectralphotonflux")) +
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(
-      name = "Sp. photon flux / 10¹⁸ s⁻¹ m⁻² nm⁻¹",
+      name = expression(italic("Φ")[λ]*" / 10¹⁸ s⁻¹ m⁻² nm⁻¹"),
+      #name = "Φ / 10¹⁸ s⁻¹ m⁻² nm⁻¹",
       labels = rlang::as_function(~ 1e-18 * .)) +
    theme(legend.position = "none")
 p.flux <- ggplot(dflong %>% filter(property == "photonflux")) +
@@ -259,7 +272,8 @@ p.flux <- ggplot(dflong %>% filter(property == "photonflux")) +
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(
-      name = "Photon flux / 10²¹ s⁻¹ m⁻²",
+      name = expression(italic("Φ")*" / 10²¹ s⁻¹ m⁻²"),
+      #name = "Photon flux / 10²¹ s⁻¹ m⁻²",
       labels = rlang::as_function(~ 1e-21 * .)) +
    theme(legend.position = "none")
 p.fluxfrac <- ggplot(dflong %>% filter(property == "photonflux.fraction")) +
@@ -272,7 +286,8 @@ p.fluxfrac <- ggplot(dflong %>% filter(property == "photonflux.fraction")) +
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
-   scale_y_continuous(name = "Photon flux fraction") +
+   scale_y_continuous(
+      name = expression(italic("Φ")*" / "*italic("Φ")[max])) +
    theme(legend.position = "none")
 # https://datavizpyr.com/join-multiple-plots-with-cowplot/
 cowtitle <- ggdraw() +
@@ -298,16 +313,16 @@ photoec::sunlight.ASTM(model="AM1.5G") %>%
       title = "Spectral irradiance AM1.5G and derived properties",
       subtitle = "In the visible range and showing only every 10th nm") %>%
    cols_label(
-      wavelength = gt::html("&#955;/nm"),
-      energy = gt::html("E/eV"),
-      AM1.5G.spectralirradiance = gt::html("I<sub>&#955;</sub>/W m⁻² nm⁻¹"),
-      AM1.5G.irradiance = gt::html("I/W m⁻²"),
-      AM1.5G.irradiance.fraction = gt::html("I / I<sub>max</sub>"),
-      AM1.5G.spectralphotonflux = gt::html("Φ<sub>&#955;</sub>/s⁻¹ m⁻² nm⁻¹"),
+      wavelength = gt::html("<i>&#955;</i>/nm"),
+      energy = gt::html("<i>E</i>/eV"),
+      AM1.5G.spectralirradiance = gt::html("<i>I</i><sub>&#955;</sub>/W m⁻² nm⁻¹"),
+      AM1.5G.irradiance = gt::html("<i>I</i>/W m⁻²"),
+      AM1.5G.irradiance.fraction = gt::html("<i>I</i> / <i>I</i><sub>max</sub>"),
+      AM1.5G.spectralphotonflux = gt::html("<i>Φ</i><sub>&#955;</sub>/s⁻¹ m⁻² nm⁻¹"),
       # this is capital letter Phi https://symbl.cc/en/03A6/
-      AM1.5G.photonflux = gt::html("Φ/s⁻¹ m⁻²"),
-      AM1.5G.photonflux.fraction = gt::html("Φ / Φ<sub>max</sub>"),
-      AM1.5G.currentdensity = gt::html("j/mA cm⁻²"),
+      AM1.5G.photonflux = gt::html("<i>Φ</i>/s⁻¹ m⁻²"),
+      AM1.5G.photonflux.fraction = gt::html("<i>Φ</i> / <i>Φ</i><sub>max</sub>"),
+      AM1.5G.currentdensity = gt::html("<i>j</i>/mA cm⁻²"),
       AM1.5G.solartohydrogen = gt::html("STH/%")) %>%
    fmt_number(columns = energy, n_sigfig = 3) %>%
    fmt_number(columns = contains("irradiance"), n_sigfig = 4) %>%
@@ -315,4 +330,12 @@ photoec::sunlight.ASTM(model="AM1.5G") %>%
    fmt_number(columns = contains("fraction"), n_sigfig = 3) %>%
    fmt_number(columns = AM1.5G.currentdensity, n_sigfig = 4) %>%
    fmt_number(columns = AM1.5G.solartohydrogen, scale_by = 100, n_sigfig = 3)
+
+## ----sketch, results="markup", out.width="33%", echo=FALSE, fig.cap=caption.am15g.geometry----
+caption.am15g.geometry <- paste(
+   "The AM1.5G spectrum of the G173-03 ASTM reference is based on a receiving surface",
+   "at an inclined plane at a tilt angle of 37° towards the equator and facing the sun",
+   "at a zenith angle of 48.2° (air mass 1.5),",
+   "with atmospheric conditions based on the 1976 U.S. Standard Atmosphere.")
+knitr::include_graphics(here("man/figures/AM15G-geometry.png"))
 

@@ -42,7 +42,7 @@ eV2nm <- function(eV) {
 
 #' Photon flux at a particular wavelength
 #'
-#' DEPRECATED. Please use \link{sunlight.ASTM()} instead.
+#' DEPRECATED. Please use \code{\link{sunlight.ASTM}} instead.
 #'
 #' @param wavelength One or more wavelength values, in nanometres
 #' @param model defaults to AM1.5G. Options are: AM0, AM1.5G, or DNCS
@@ -89,7 +89,7 @@ flux <- function(wavelength, model = "AM1.5G") {
 
 #' Total photon flux across one ore more wavelength ranges
 #'
-#' DEPRECATED. please use \link{sunlight.ASTM()} instead.
+#' DEPRECATED. please use \code{\link{sunlight.ASTM}} instead.
 #'
 #' @param wl.start numeric vector, in nanometres
 #' @param wl.stop numeric vector, in nanometres

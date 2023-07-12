@@ -1,17 +1,17 @@
 
 ---
-title: "The solar spectrum"
+title: "The G173-03 reference solar spectra"
 author: "Taha Ahmed"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The solar spectrum}
+  %\VignetteIndexEntry{The G173-03 reference solar spectra}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 
-```{r packages, echo=T, message=FALSE}
+```{r packages, echo=FALSE, message=FALSE}
 library(dplyr)
 library(tidyr)
 library(stringr)  # str_remove
@@ -24,7 +24,7 @@ library(gt)
 library(here)
 ```
 
-```{r global_options, echo=T, message=FALSE}
+```{r global_options, echo=FALSE, message=FALSE}
 options(
    digits   = 7,
    width    = 84,
@@ -63,8 +63,8 @@ dataset <- photoec::ASTMG173
 dataset %>% glimpse()
 ```
 
-This dataframe is in wide format. To make plotting (with ggplot2) faster, let's
-transform it to long format.
+This dataframe is in wide format. We can convert it to tidy (long) format
+for easier plotting with ggplot2:
 
 ```{r transform-data, echo=TRUE, results="markup"}
 # while we are at it, let's give the existing columns more descriptive names
@@ -81,7 +81,8 @@ datalong <- dataset %>% pivot_longer(
 datalong %>% glimpse()
 ```
 
-
+And take a first look at the G137-03 reference solar spectra as included in
+this dataset `photoec::ASTMG173`:
 
 ```{r astmg173-dataset, echo=FALSE}
 ggplot(datalong) +
@@ -110,7 +111,8 @@ ggplot(datalong) +
 
 
 Now, as a sanity check, let's compare the spectra returned by this package's
-`sunlight.ASTM()` function with those above (should be an exact match).
+`sunlight.ASTM()` function with those above (should be an exact match if you
+use the same wavelength vector).
 
 ```{r astmg173-function, echo=FALSE}
 dflong <- photoec::sunlight.ASTM() %>%
@@ -155,7 +157,7 @@ ggplot(dflong %>% filter(property == "spectralirradiance")) +
 ```
 
 They look the same, and indeed, the values (here exemplified by AM1.5G) returned by
-the dataset and the function are pairwise equal, as expected:
+the dataset and the function are pairwise equal:
 
 ```{r diff-dataset-vs-function, echo=TRUE, results="markup"}
 dplyr::near(
@@ -163,13 +165,26 @@ dplyr::near(
    dflong %>% filter(model == "AM1.5G") %>% filter(property == "spectralirradiance") %>% pull(value)) %>% all()
 ```
 
-Whereas the dataset contains only spectral irradiance, the dataframe returned by
-this package's `sunlight.ASTM()` function derives other properties, namely,
+Whereas the dataset contains **only spectral irradiance**, the dataframe returned by
+the `photoec::sunlight.ASTM()` function **includes other derived properties**, namely,
 absolute and relative cumulative irradiance (`irradiance` and `irradiance.fraction`),
 spectral photon flux (`spectralphotonflux`) and absolute and relative cumulative
 photon flux (`photonflux` and `photonflux.fraction`).
 
-```{r function-exploration, echo=FALSE}
+This allows us to easily explore not only spectral irradiance but also irradiance
+(radiant power in kW m⁻²) and the distribution of cumulative radiant power by wavelength.
+And in the same way, it allows us to explore spectral photon flux, photon flux,
+and cumulative photon flux by wavelength:
+
+```{r function-exploration, echo=FALSE, fig.cap=caption.functionexploration}
+caption.functionexploration <- paste(
+   "Quantities returned by the `sunlight.ASTM()` function for the AM0, AM1.5G and DNCS spectra:",
+   "**(a)** Solar spectral irradiance,",
+   "**(b)** cumulative irradiance,",
+   "**(c)** irradiance fraction,",
+   "**(d)** spectral photon flux,",
+   "**(e)** cumulative photon flux, and",
+   "**(f)** photon flux fraction.")
 # using facetting is not suitable because we have different y-axis for every plot...
 # ggplot(dflong) +
 #    facet_wrap(~property, scales = "free_y") +
@@ -202,7 +217,9 @@ p.spirr <- ggplot(dflong %>% filter(property == "spectralirradiance")) +
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
-   scale_y_continuous(name = "Sp. irradiance / W m⁻² nm⁻¹") +
+   # a complicated expression here to get the equivalent of $I_\mathrm{\lambda}$
+   # https://stackoverflow.com/questions/17334759/subscript-letters-in-ggplot-axis-label
+   scale_y_continuous(name = expression(italic("I")[λ]*" / W m⁻² nm⁻¹")) +
    theme(legend.position = "none")
 p.irr <- ggplot(dflong %>% filter(property == "irradiance")) +
    geom_line(
@@ -237,7 +254,7 @@ p.irr <- ggplot(dflong %>% filter(property == "irradiance")) +
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(
-      name = "Irradiance / kW m⁻²",
+      name = bquote(italic("I")~" / kW m⁻²"),
       labels = rlang::as_function(~ 1e-3 * .)) +
    theme(legend.position = "none")
 p.irrfrac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
@@ -250,7 +267,9 @@ p.irrfrac <- ggplot(dflong %>% filter(property == "irradiance.fraction")) +
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
-   scale_y_continuous(name = "Irradiance fraction") +
+   scale_y_continuous(
+      # another complex expression, equivalent: $I/I_\mathrm{max}$
+      name = expression(italic("I")*" / "*italic("I")[max])) +
    theme(
       legend.position = c(0.98, 0.02),
       legend.justification = c(1, 0))
@@ -270,7 +289,8 @@ p.spflux <- ggplot(dflong %>% filter(property == "spectralphotonflux")) +
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(
-      name = "Sp. photon flux / 10¹⁸ s⁻¹ m⁻² nm⁻¹",
+      name = expression(italic("Φ")[λ]*" / 10¹⁸ s⁻¹ m⁻² nm⁻¹"),
+      #name = "Φ / 10¹⁸ s⁻¹ m⁻² nm⁻¹",
       labels = rlang::as_function(~ 1e-18 * .)) +
    theme(legend.position = "none")
 p.flux <- ggplot(dflong %>% filter(property == "photonflux")) +
@@ -306,7 +326,8 @@ p.flux <- ggplot(dflong %>% filter(property == "photonflux")) +
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
    scale_y_continuous(
-      name = "Photon flux / 10²¹ s⁻¹ m⁻²",
+      name = expression(italic("Φ")*" / 10²¹ s⁻¹ m⁻²"),
+      #name = "Photon flux / 10²¹ s⁻¹ m⁻²",
       labels = rlang::as_function(~ 1e-21 * .)) +
    theme(legend.position = "none")
 p.fluxfrac <- ggplot(dflong %>% filter(property == "photonflux.fraction")) +
@@ -319,7 +340,8 @@ p.fluxfrac <- ggplot(dflong %>% filter(property == "photonflux.fraction")) +
          name = "Energy / eV",
          breaks = c(4, 2, 1, 0.5),
          labels = c("4", "2", "1", "0.5"))) +
-   scale_y_continuous(name = "Photon flux fraction") +
+   scale_y_continuous(
+      name = expression(italic("Φ")*" / "*italic("Φ")[max])) +
    theme(legend.position = "none")
 # https://datavizpyr.com/join-multiple-plots-with-cowplot/
 cowtitle <- ggdraw() +
@@ -333,12 +355,6 @@ row.flux <- plot_grid(p.spflux, p.flux, p.fluxfrac, nrow = 1, labels = c("d", "e
 cowplot::plot_grid(cowtitle, row.irr, row.flux, ncol = 1, rel_heights = c(0.1, 1, 1))
 ```
 
-Quick reminder: AM0 is the extra-terrestrial irradiance (solar spectrum just outside
-earth's atmosphere), and AM1.5G is the solar spectrum at sea-level at
-mid-latitudes, and DNCS is the direct normal circumsolar spectrum which
-excludes diffuse light.
-In the following we will discuss only AM1.5G, unless otherwise noted.
-<!-- https://en.wikipedia.org/wiki/Air_mass_(solar_energy) -->
 About 75% of the total irradiance (i.e., power) is contained below 1000 nm,
 but only about 50% of the total photon flux. This makes sense, since
 each lower-wavelength photon carries more energy.
@@ -356,16 +372,16 @@ photoec::sunlight.ASTM(model="AM1.5G") %>%
       title = "Spectral irradiance AM1.5G and derived properties",
       subtitle = "In the visible range and showing only every 10th nm") %>%
    cols_label(
-      wavelength = gt::html("&#955;/nm"),
-      energy = gt::html("E/eV"),
-      AM1.5G.spectralirradiance = gt::html("I<sub>&#955;</sub>/W m⁻² nm⁻¹"),
-      AM1.5G.irradiance = gt::html("I/W m⁻²"),
-      AM1.5G.irradiance.fraction = gt::html("I / I<sub>max</sub>"),
-      AM1.5G.spectralphotonflux = gt::html("Φ<sub>&#955;</sub>/s⁻¹ m⁻² nm⁻¹"),
+      wavelength = gt::html("<i>&#955;</i>/nm"),
+      energy = gt::html("<i>E</i>/eV"),
+      AM1.5G.spectralirradiance = gt::html("<i>I</i><sub>&#955;</sub>/W m⁻² nm⁻¹"),
+      AM1.5G.irradiance = gt::html("<i>I</i>/W m⁻²"),
+      AM1.5G.irradiance.fraction = gt::html("<i>I</i> / <i>I</i><sub>max</sub>"),
+      AM1.5G.spectralphotonflux = gt::html("<i>Φ</i><sub>&#955;</sub>/s⁻¹ m⁻² nm⁻¹"),
       # this is capital letter Phi https://symbl.cc/en/03A6/
-      AM1.5G.photonflux = gt::html("Φ/s⁻¹ m⁻²"),
-      AM1.5G.photonflux.fraction = gt::html("Φ / Φ<sub>max</sub>"),
-      AM1.5G.currentdensity = gt::html("j/mA cm⁻²"),
+      AM1.5G.photonflux = gt::html("<i>Φ</i>/s⁻¹ m⁻²"),
+      AM1.5G.photonflux.fraction = gt::html("<i>Φ</i> / <i>Φ</i><sub>max</sub>"),
+      AM1.5G.currentdensity = gt::html("<i>j</i>/mA cm⁻²"),
       AM1.5G.solartohydrogen = gt::html("STH/%")) %>%
    fmt_number(columns = energy, n_sigfig = 3) %>%
    fmt_number(columns = contains("irradiance"), n_sigfig = 4) %>%
@@ -375,15 +391,54 @@ photoec::sunlight.ASTM(model="AM1.5G") %>%
    fmt_number(columns = AM1.5G.solartohydrogen, scale_by = 100, n_sigfig = 3)
 ```
 
-Please note that the spectral irradiance and flux shown in the table are *not* summed
-over the wavelength step. That is, they are simply the value at the shown wavelength,
-and not the spectral irradiance/flux summed over the wavelength step (10 nm in this case).
+Please note that the spectral irradiance and flux shown in the table are not summed
+over the wavelength interval. That is, they are simply the value *at the shown wavelength*,
+and not the spectral irradiance/flux summed over the wavelength interval (10 nm in this case).
 <!-- Perhaps we should change this? -->
 The calculated current density and STH values assume perfect
 quantum efficiency, Faradaic efficiency and no band gap and are only meant
 as an illustrative ceiling.
 
 
-## Links
 
+## Geometry of the AM1.5G reference
+
+Let's consider the the geometry of the global tilt solar reference
+spectrum (AM1.5G).
+
+At this point I would like to extend my thanks to Zhang Yangdong's blog for providing
+one of the few illustrations (outside of the scientific literature) demonstrating all
+the angles (ha!) involved in the AM1.5G geometry.
+His blog appears to have been [lost to cyberspace](https://blog.sciencenet.cn/blog-616448-889852.html), but the
+[illustration itself](http://image.sciencenet.cn/album/201505/13/120558i594h5nz124gfj3c.jpg)
+is still accessible via the blog's webhost.
+
+Below is my own sketch of the AM1.5G geometry (absorber is a plane tilted at 37°,
+with AM1.5 irradiation) created with TikZ (all angles are correct,
+but lengths are only illustrative):
+
+```{r sketch, results="markup", out.width="33%", echo=FALSE, fig.cap=caption.am15g.geometry}
+caption.am15g.geometry <- paste(
+   "The AM1.5G spectrum of the G173-03 ASTM reference is based on a receiving surface",
+   "at an inclined plane at a tilt angle of 37° towards the equator and facing the sun",
+   "at a zenith angle of 48.2° (air mass 1.5),",
+   "with atmospheric conditions based on the 1976 U.S. Standard Atmosphere.")
+knitr::include_graphics(here("man/figures/AM15G-geometry.png"))
+```
+
+At air mass 1.5 the zenith angle is 48.2°, and the solar altitude is
+(the complementary angle) 41.8°. Note how the tilted absorber negates some of the projection effect
+(in the sketch, the tilted plane absorbs six solar rays, whereas the horizontal plane absorbs only five).
+That is, of course, the whole point of tilting the absorbing surface at higher altitudes.
+37° roughly matches the average latitude of the contiguous United States, and air mass 1.5,
+as we have seen, corresponds to a latitude of 48° which is representative of the temperate
+zone wherein many industrialised cities around the world happen to be located.
+
+
+
+## Sources
+
++ https://www.nrel.gov/grid/solar-resource/spectra-am1.5.html
++ https://en.wikipedia.org/w/index.php?title=Air_mass_(solar_energy)&oldid=1158991725
++ https://en.wikipedia.org/w/index.php?title=Geographic_center_of_the_United_States&oldid=1159819200#Contiguous_United_States
 + https://www.nrel.gov/grid/solar-resource/spectra-am1.5.html

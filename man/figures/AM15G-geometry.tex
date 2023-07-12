@@ -1,0 +1,65 @@
+% latexmk -pdf AM15G-geometry.tex
+% convert -density 300 AM15G-geometry.pdf -resize 50% -alpha remove -alpha off AM15G-geometry.png
+\documentclass[preview]{standalone}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{%
+   arrows,%
+   arrows.meta,%
+   decorations,%
+   decorations.pathreplacing%
+}
+\usepackage{siunitx}
+
+\begin{document}
+\definecolor{amseagreen}{HTML}{2E8B57}
+\definecolor{uranianblue}{HTML}{AFDBF5}
+\tikzstyle{horizon} = [%
+   % https://texample.net/tikz/examples/oblique-incidence
+   postaction={draw,decorate,decoration={border,angle=-45,amplitude=0.3cm,segment length=1mm}}]
+% demonstrating the AM1.5 global tilt geometry
+\begin{tikzpicture}[inner sep=0pt,outer sep=0pt,font=\scriptsize]
+   % atmosphere
+   \fill[draw=none, fill=uranianblue, opacity=0.20] (-2, 0) rectangle +(5, 2.2);
+
+   % AM1.5G label % position manually adjusted
+   \node[anchor=north west,xshift=3pt,yshift=-2pt,font=\sffamily\footnotesize] at (-2, 2.2) {AM1.5G};
+
+   % horizon
+   \draw[amseagreen, line width=.5pt, horizon] (-2,0) -- (3,0);
+
+   % zenith line
+   % xshift place the zenith through the center of the absorber (depends on its length and tilt angle)
+   % outer sep puts some separation between the label and the zenith line
+   \node [xshift=-0.399cm,fill=white, outer sep=1mm] (zenith) at (0,3) {zenith};
+   % https://tikz.dev/tikz-coordinates#sec-13.3.1
+   \draw[->,line width=.5pt] (zenith |- 0,0) -- (zenith.south);
+
+   \begin{scope}
+      \clip (-2,0) rectangle (3, 3);
+      % AM1.5, m = 1/cos z => z = 48.2 from the zenith line
+      \foreach \x in {7pt, 0pt, -7pt, -14pt, -21pt, -28pt, -35pt}
+         \draw [{Kite[length=4pt,width=2pt,inset=1pt]}-, orange, thick, yshift=0cm, xshift=\x] (0:0cm) -- ({90-48.2}:4.5cm);
+   \end{scope}
+
+   % absorber, horizontal surface
+   \fill[draw=black, fill=black!50, fill opacity=0.8] (0,0) rectangle +(-1.00, -0.16);
+
+   % absorber, tilted surface (same size as horizontal absorber)
+   % 180 - 37 = 143, 90 + 53 = 143
+   \fill[draw=black, fill=black!50, fill opacity=0.8, rotate around={53:(0,0)}] (0,0) rectangle +(0.16, 1.00);
+
+   % angle arc for tilted surface
+   \draw (-0.9cm, 0cm) arc [start angle=180, end angle=143, radius=9mm] node [midway, anchor=east, xshift=-1pt, yshift=4pt] {\ang{37}};
+
+   % surface normal
+   \draw [dashed, thick, opacity=0.35, yshift=0.5cm, xshift=-0.25cm] (0:0cm) -- ({90-37}:2cm);
+
+   % arc for zenith angle (zenith line to AM1.5 rays)
+   % 90 - 48.2 = 41.8
+   \draw (-0.399cm, 2.0cm) arc [start angle=90, end angle=41.8, radius=17mm] node [midway, below, xshift=-6pt, yshift=-2pt] {\ang{48.2}};
+
+   % arc for solar altitude (ground level to AM1.5 rays)
+   \draw (1.0cm, 0cm) arc [start angle=0, end angle=41.8, radius=12.8mm] node [pos=0.25, above, xshift=10pt] {\ang{41.8}};
+\end{tikzpicture}
+\end{document}

@@ -18,11 +18,11 @@ sunlight.ASTM(
 NOTE: which model is returned depends on the "model" argument
     \describe{
        \item{wavelength}{Wavelength/nm}
-       \item{<model>.spectralirradiance}{Spectral irradiance/W m-2 nm-1}
-       \item{<model>.irradiance}{Cumulative irradiance/W m-2}
+       \item{<model>.spectralirradiance}{Spectral irradiance/W m⁻² nm⁻¹}
+       \item{<model>.irradiance}{Cumulative irradiance/W m⁻²}
        \item{<model>.irradiance.fraction}{Relative irradiance (0-1)}
-       \item{<model>.spectralphotonflux}{Spectral photon flux/s-1 m-2 nm-1}
-       \item{<model>.photonflux}{Cumulative photon flux/s-1 m-2}
+       \item{<model>.spectralphotonflux}{Spectral photon flux/s⁻¹ m⁻² nm⁻¹}
+       \item{<model>.photonflux}{Cumulative photon flux/s⁻¹ m⁻²}
        \item{<model>.photonflux.fraction}{Relative photon flux (0-1)}
     }
 }
@@ -33,7 +33,7 @@ Calculate the spectral irradiance for sunlight at or below
 \details{
 Calculate the spectral irradiance of sunlight on Earth
     based on ASTM G173-03 model for any wavelength between
-    280 nm and 4000 nm with at best 0.01 nm resolution (interpolated).
+    280 nm and 4000 nm with at best 0.01 nm resolution (interpolated).
 }
 \examples{
 \dontrun{

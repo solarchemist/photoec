@@ -36,7 +36,7 @@ I suggest the following package rebuild procedure (in RStudio IDE):
   Should complete with one note about `undefined global functions or variables: label`
   but no warnings nor errors:
 ```
-── R CMD check results ───────────────────────────────────────────── photoec 0.4.1.9000 ────
+── R CMD check results ───────────────────────────────── photoec 0.4.2.9000 ────
 Duration: 17.3s
 
 ❯ checking R code for possible problems ... NOTE
@@ -66,12 +66,12 @@ Contributions are welcome, no matter whether code, bug reports or suggestions!
 
 ## Read the vignettes
 
-This package includes two datasets: `solarconstants` a dataframe of some solar constants,
-and `ASTMG173` the ASTM G173-03 reference solar spectra.
 
-+ The [first vignette demonstrates how to update the datasets in this package](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/datasets.html),
-  and also show-cases the `solarconstants` dataset.
-+ The [second vignette show-cases the solar spectra](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/solar-spectra.html).
++ The properties of the [black body spectrum](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/blackbody-spectra.html).
++ An introduction to the [G173-03 reference solar spectra](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/solar-spectra.html).
++ Am introduction to the [air mass concept as applied towards solar energy](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/airmass.html).
++ [How to update the datasets](https://htmlpreview.github.io/?https://github.com/solarchemist/photoec/blob/master/doc/datasets.html) in this package. This package includes two datasets:
+  `solarconstants` a dataframe of some solar constants, and `ASTMG173` the ASTM G173-03 reference solar spectra.
 
 
 ## Citing this package

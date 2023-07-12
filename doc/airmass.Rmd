@@ -1,0 +1,264 @@
+
+---
+title: "Air mass in solar energy"
+author: "Taha Ahmed"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Air mass in solar energy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r packages, echo=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(ggplot2)
+library(here)
+```
+
+```{r global_options, echo=FALSE, message=FALSE}
+options(
+   digits   = 7,
+   width    = 84,
+   continue = " ",
+   prompt   = "> ",
+   warn = 0,
+   stringsAsFactors = FALSE)
+opts_chunk$set(
+   dev        = "svg",
+   fig.align  = "center",
+   fig.width  = 7.10,
+   # 7.10/4.39=1.617 golden ratio
+   # but we increase height slightly to make allowance for title,
+   # secondary axis, caption, etc.
+   fig.height = 4.58,
+   echo       = TRUE,
+   eval       = TRUE,
+   cache      = FALSE,
+   collapse   = TRUE,
+   results    = 'hide',
+   message    = FALSE,
+   warning    = FALSE,
+   tidy       = FALSE)
+```
+
+```{r echo=F}
+astrorefraction <- function(z = 48.2) {
+   # here we use the constants as calculated by Woolard & Clemence, 1966 (chapter 5, page 84)
+   A <- common::asec2degrees(60.29)
+   B <- common::asec2degrees(0.06688)
+   R <- A * tan(common::as.radians(z)) - B * tan(common::as.radians(z))^3
+   return(R)
+}
+```
+
+
+The air mass concept, as used in the solar energy research field, is a useful
+abstraction that encompasses:
+
++ geometry of Earth's curvature, which we mostly ignore except as a built-in
+dependence of the zenith angle with latitude (assuming we are on the date of either equinox,
+then at the equator the Sun reaches zenith in the skey, but at higher latitudes the solar altitude
+will be $90^\circ-z$ where the zenith angle $z$ equals the latitude in degrees),
++ projection effect of a beam of light at a slant angle through the atmosphere which
+causes the beam to traverse a thickness of atmosphere depending on that angle
+(usually expressed in terms of the zenith angle $z$);
+where a beam transmitted through the atmosphere along the zenith is said to
+traverse "one air mass", and a beam transmitted at a zenith angle of 60°
+traverses two air masses, and so on,
++ the additional distance the beam is transmitted through the atmosphere (for $\mathrm{AM}>1$)
+also has the additional effect of increasing the scattering and absorption losses
+incurred before the sunlight reaches the ground, which affects the spectral composition
+both due to Rayleigh scattering (depends on the wavelength to the fourth power, or why the
+sky is blue) and due to absorption by water vapour, ozone or other molecules in the atmosphere.
+
+The end result is that as traversed air mass increases, the total radiant power
+of sunlight reaching the ground decreases, and its spectral composition includes
+comparatively less lower-wavelength radiation.
+Just as air mass at noon changes with latitude, air mass for a specific location
+naturally also changes with time of day (see @Gueymard2012 for several examples).
+
+
+At low zenith angles a good approximation is given by assuming a homogeneous
+plane-parallel atmosphere (i.e., one in which density is constant and Earth's
+curvature is ignored). The air mass (AM) then is simply the secant of the zenith
+angle $z$:
+\begin{equation}
+\mathrm{AM} = \sec(z) = 1 / \cos(z)
+\end{equation}
+
+
+```{r airmass-secant-vs-Bemporad}
+z <- seq(0, 90, 1)
+amdf <- data.frame(
+   zenith = z,
+   model = "PPLM",
+   AM = 1 / cos(common::as.radians(z))
+)
+amdf <- bind_rows(
+   amdf,
+   data.frame(
+     zenith = z,
+      model = "Bemporad",
+      AM = astrorefraction(z) / (common::asec2degrees(58.36) * sin(common::as.radians(z)))
+   )
+)
+```
+
+> To calculate the astronomical refraction $R$ (used in Bemporad's formula) we make use
+> of this package's `astrorefraction()` function which internally uses values
+> from @Woolard1966.
+
+As demonstrated in the following plot, using Bemporad's formula does not gain us any meaningful
+improvement over the commonly used secant formula (both break down completely
+above around 70 degrees from the zenith).
+Which I guess should not be a surprise, since Bemporad's formula depends on the
+astronomical refraction $R$, which function is known to become unphysical above 70°.
+
+```{r echo=FALSE, warning=FALSE}
+ggplot(amdf) +
+   coord_cartesian(y = c(0, 88)) +
+   geom_line(aes(x = zenith, y = AM, colour = model)) +
+   scale_x_continuous(
+      name = "Angle from zenith, z/°",
+      breaks = seq(0, 90, 10)) +
+   theme(
+      legend.position = c(0.02, 0.98),
+      legend.justification = c(0, 1))
+```
+
+
+
+## Other formulas for air mass
+
+
+The Bemporad formula (I'm not sure about the background of this formula, except that
+it is over 100 years old; Bemporad was active around the previous turn of the century),
+introduces a dependence on astronomical refraction $R$ (@Considine2008):
+\begin{equation}
+\mathrm{AM} = R / (58.36^{\prime\prime}\sin(z))
+\end{equation}
+
+In simplified terms, astronomical refraction is the application of [Snell's law
+of refraction](https://en.wikipedia.org/wiki/Snell%27s_law) to the medium of the atmosphere,
+and thus gives a measure of the difference between the true zenith angle of
+celestial objects vs their apparent zenith angle.^[A short note on terminology here:
+atmospheric refraction of objects far away from Earth (compared
+to the radius of the Earth) is termed *astronomical refraction*, and atmospheric
+refraction of objects close to the Earth is termed *terrestrial refraction*.]
+
+The simplest models of astronomical refraction are the **concentric spherical
+shell model** and the **plane-parallel layer model**, with the latter being an
+approximation for the former (@Mahan1962).
+
+The secant formula for airmass (see above) follows from the plane-parallel layer
+model of the atmosphere when assuming constant air density and ignoring Earth's
+curvature. This level of abstraction is not enough for astronomy, particularly
+not when the celestial object is close to the horizon.
+More accurate AM formulas exist (@Corbard2019, @Auer2000), but are much more work for
+very little or even no gain in accuracy for solar energy research purposes,
+in my opinion.
+However, it is good to keep in mind that according to such accurate formulas
+air mass is approximately 38 at $z\approx90^\circ$ (Sun at the horizon).
+
+
+
+## The projection effect of air mass
+
+AM1 occurs when the Sun is at zenith, which can only happen at noon at latitudes
+±23.4° from the equator
+(known as the [tropic of Cancer](https://en.wikipedia.org/wiki/Tropic_of_Cancer)
+in the northern hemisphere and the [tropic of Capricorn](https://en.wikipedia.org/wiki/Tropic_of_Capricorn)
+in the southern) which is caused by Earth's axis being tilted to the same degree.
+<!-- https://www.science.org/content/article/humanity-s-groundwater-pumping-has-altered-earth-s-tilt -->
+<!-- https://www.jpl.nasa.gov/news/nasa-study-solves-two-mysteries-about-wobbling-earth -->
+
+Now imagine we were positioned on a latitude with the Sun directly overhead (so within
+the tropics), and started moving towards the closest pole and observing the angular
+distance of the Sun from zenith at noon for every new latitude. What would we see?
+Well, as you would expect, the *altitude* of the Sun at noon would decrease
+and the (complementary) angle from zenith would increase. In so doing, the distance
+of atmosphere traversed by the sunlight would increase (assuming the atmosphere is
+a plane parallel layer of constant thickness).
+
+Note that just as air mass increases with increasing latitude, so it does
+with time of day. The latitude simply puts a limit on the lowest attainable
+air mass value at noon, but that also depends on the time of year due to Earth's tilt.
+
+With all that established, it becomes an exercise in simple trigonometry to
+calculate air mass for a given zenith angle $z$.
+
+```{r sketch, results="markup", out.width="33%", echo=FALSE}
+knitr::include_graphics(here("man/figures/airmass-geometry.png"))
+```
+
+In the sketch above, AM1 and AM1.5 are drawn to illustrate how a beam of light
+with the same diameter $d$ effectively irradiate a larger patch of surface at
+increasing air mass (36% larger surface area for AM1.5 than AM1).
+<!-- 97% larger for AM1.99 compared to AM1 -->
+The illustration uses correct angles, but is otherwise illustrative, e.g., we are
+completely neglecting Earth's curvature.
+
+> Quick recap:
+> AM0 is the extra-terrestrial irradiance (solar spectrum just outside earth's atmosphere),
+> AM1 is the terrestrial sea-level irradiance with the Sun at zenith,
+> and AM1.5 is the irradiance with the Sun at an angle of 48.2° from the zenith.
+> All defined for some standard values of atmospheric temperature, pressure and density^[Commonly
+> given as a density of dry air 1.293 kg m⁻³ at a temperature of 273.15 K and a pressure
+> of 101325 Pa under normal gravity 9.80665 m s⁻².]
+
+
+
+
+
+## Scattering and absorption effect of air mass
+
+Immediately outside the atmosphere all solar irradiance is in the form of direct
+irradiance (meaning that all incoming irradiance is received from the direction
+of the Sun).
+The atmosphere introduces scattering and absorption, more so with increasing
+air mass.
+
+Scattering introduces a diffuse component to the incoming solar irradiance.
+To a absorbing surface on the ground, diffuse irradiance appears to come from
+all directions of the sky.
+The sum of direct and diffuse irradiance is called *global* irradiance.
+
+Absorption occurs by specific transition lines of the various components in
+the atmosphere and leads to the typical "bands" observed in the irradiance spectrum
+at sea level as the molecules in question are electronically excited and then
+usually return to their ground state via vibrational energy states.
+
+The magnitude of attenuation of the irradiance by the atmosphere
+is generally given by the Beer-Lambert law, just like for a beam of light
+through any medium, except the absorption coefficient $\alpha$ as commonly used
+in chemistry is now replaced by a so-called
+[*optical depth* $\tau$](https://en.wikipedia.org/w/index.php?title=Optical_depth&oldid=1147496257#Atmospheric_sciences):
+\begin{equation}
+I = I_0 \exp(\tau)
+\end{equation}
+which for a slanted column can be expressed in terms of the solar zenith angle $z$
+(@Mueller2012):
+\begin{equation}
+I = I_0 \exp\left(\frac{\tau}{\cos(z)}\right)
+\end{equation}
+
+
+
+
+
+## Sources
+
++ https://glossary.ametsoc.org/wiki/Bemporad's_formula
++ https://en.wikipedia.org/w/index.php?title=Atmospheric_refraction&oldid=1150186905
++ https://en.wikipedia.org/w/index.php?title=Air_mass_(astronomy)&oldid=1160837999
++ https://en.wikipedia.org/w/index.php?title=Air_mass_(solar_energy)&oldid=1158991725
++ https://en.wikipedia.org/w/index.php?title=Optical_depth&oldid=1147496257#Atmospheric_sciences
+
+
+## References
+

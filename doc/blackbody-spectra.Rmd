@@ -1,0 +1,737 @@
+
+---
+title: "The spectrum of a black body"
+author: "Taha Ahmed"
+date: "`r Sys.Date()`"
+# I made an attempt to to load siunitx in Rmd->HTML vignette -- it did not work, broke all LaTeX support
+# https://stackoverflow.com/a/55531382/1198249
+# output:
+#   rmarkdown::html_vignette:
+#     includes:
+#       in_header: header.html
+# also tried header-includes, did not work (but without breaking all LaTeX)
+# header-includes:
+#   - \usepackage{siunitx}
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The spectrum of a black body}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r packages, echo=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+# to use variables in dplyr::rename
+# https://stackoverflow.com/a/67644830/1198249
+library(glue)
+library(stringr)  # str_remove
+library(tibble)   # add_column
+library(knitr)
+library(ggplot2)
+library(latex2exp)
+library(cowplot)
+library(ggrepel)
+library(gt)
+library(xtable)
+library(here)
+library(common)
+```
+
+```{r global_options, echo=FALSE, message=FALSE}
+options(
+   digits   = 7,
+   width    = 84,
+   continue = " ",
+   prompt   = "> ",
+   warn = 0,
+   stringsAsFactors = FALSE)
+opts_chunk$set(
+   dev        = "svg",
+   fig.align  = "center",
+   fig.width  = 7.10,
+   # 7.10/4.39=1.617 golden ratio
+   # but we increase height slightly to make allowance for title,
+   # secondary axis, caption, etc.
+   fig.height = 4.58,
+   echo       = TRUE,
+   eval       = TRUE,
+   cache      = FALSE,
+   collapse   = TRUE,
+   results    = 'hide',
+   message    = FALSE,
+   warning    = FALSE,
+   tidy       = FALSE)
+```
+
+
+```{r global_settings}
+spectral.min <- 1E-7 # meter
+spectral.max <- 4E-6 # meter
+spectral.stepsize <- 1E-9 # meter
+vis.min <- 380e-9 # m
+vis.max <- 780e-9 # m
+```
+
+
+```{r echo=FALSE}
+sunlight.Planck <- function(
+   wavelength = seq(1E-7, 4E-6, 1E-9), # 100 nm - 4000 nm, stepsize 1 nm
+   temperature = dplyr::filter(photoec::solarconstants, label == "T.Sun")$value) {
+
+   stopifnot(
+      # stop if wavelength contains any values <= 0
+      all(wavelength > 0),
+      # stop if temperature is T <= 0
+      temperature > 0)
+
+
+   ##### Local variables
+   c0 <- dplyr::filter(photoec::solarconstants, label=="c")$value
+   planck <- dplyr::filter(photoec::solarconstants, label=="h")$value
+   boltzmann <- dplyr::filter(photoec::solarconstants, label=="k")$value
+   r.Sun <- dplyr::filter(photoec::solarconstants, label=="R.Sun")$value
+   r.AU <- dplyr::filter(photoec::solarconstants, label=="R.AU")$value
+   area.Sun <- dplyr::filter(photoec::solarconstants, label=="A.Sun")$value
+   area.Earth <- dplyr::filter(photoec::solarconstants, label=="A.Earth")$value
+
+   # spectral radiance at Sun's surface using Planck's law
+   sprad.power.term <- (2 * pi * planck * c0^2) / (wavelength^5)
+   sprad.exp.term   <- 1 / (exp((planck * c0) / (wavelength * boltzmann * temperature)) - 1)
+   spectralradiance <- sprad.power.term * sprad.exp.term
+
+   # based on theory (i.e., Planck's law) we can calculate Solar output
+   # at the surface of the Sun as well as outside the Earth's atmosphere
+   theory <-
+      data.frame(
+         wavelength = wavelength,
+         # cannot easily know unit of provided wavelength (without proper units support)
+         # which makes conversion to eV a very complex affair best avoided at this point
+         # energy = photoec::wavelength2energy(1E9 * wavelength),
+         #####################################################
+         ### Characteristics of sunlight at the Sun's surface
+         Sun.spectralradiance = spectralradiance,
+         Sun.spectralradiance.powerterm = sprad.power.term,
+         Sun.spectralradiance.expterm = sprad.exp.term,
+         # radiance (total radiant power) units of \watt\per\square\metre
+         Sun.radiance = cumsum(c(0, common::trapz(wavelength, spectralradiance))),
+         # luminosity (total radiance times surface area) units of \watt
+         Sun.luminosity = area.Sun * sum(c(0, common::trapz(wavelength, spectralradiance))),
+         ######################################################################
+         ### Characteristics of sunlight immediately outside Earth's atmosphere
+         Earth.spectralirradiance = (r.Sun / r.AU)^2 * spectralradiance,
+         Earth.irradiance = cumsum(c(
+            0, common::trapz(wavelength, (r.Sun / r.AU)^2 * spectralradiance))),
+         # total luminosity hitting Earth's surface (day-side)
+         Earth.luminosity = 0.5 * area.Earth * sum(c(
+            0, common::trapz(wavelength, (r.Sun / r.AU)^2 * spectralradiance))))
+
+   return(theory)
+}
+solarconstants <- tribble(
+   ~name,                       ~label,    ~value,                 ~reference,        ~label.html,                ~label.tex,                      ~unit.html,  ~unit.tex,
+   "Speed of light",            "c",       constants::syms$c0,     "per definition",  "<i>c</i>",                 "\\ensuremath{c}",               "m s⁻¹",     "\\si{\\metre\\per\\second}",
+   "Elementary charge",         "e",       constants::syms$e,      "CODATA 2018",     "<i>e</i>",                 "\\ensuremath{e}",               "C",         "\\si{\\coulomb}",
+   "Planck's constant",         "h",       constants::syms$h,      "CODATA 2018",     "<i>h</i>",                 "\\ensuremath{h}",               "J s⁻¹",     "\\si{\\joule\\second}",
+   "Planck's constant",         "h.eV",    constants::syms$hev,    "CODATA 2018",     "<i>h</i>",                 "\\ensuremath{h}",               "eV s⁻¹",    "\\si{\\electronvolt\\second}",
+   "Boltzmann's constant",      "k",       constants::syms$k,      "CODATA 2018",     "<i>k</i>",                 "\\ensuremath{k}",               "J K⁻¹",     "\\si{\\joule\\per\\kelvin}",
+   "Stefan-Boltzmann constant", "sigma",   constants::syms$sigma0, "CODATA 2018",     "σ",                        "\\ensuremath{\\sigma}",         "W m⁻² K⁻⁴", "\\si{\\watt\\per\\square\\metre\\per\\kelvin\\tothe{4}}",
+   "Temperature of the Sun",    "T.Sun",   5772,                   "NASA, Wikipedia", "<i>T</i><sub>Sun</sub>",   "\\ensuremath{T_\\text{Sun}}",   "K",         "\\si{\\kelvin}",
+   "Astronomical unit",         "R.AU",    149597870700,           "per definition",  "<i>R</i><sub>AU</sub>",    "\\ensuremath{R_\\text{AU}}",    "m",         "\\si{\\metre}",
+   "Radius of the Sun",         "R.Sun",   695700000,              "Wikipedia",       "<i>R</i><sub>Sun</sub>",   "\\ensuremath{R_\\text{Sun}}",   "m",         "\\si{\\metre}",
+   "Surface area of the Sun",   "A.Sun",   NA,                     "A=4×π×R²",        "<i>A</i><sub>Sun</sub>",   "\\ensuremath{A_\\text{Sun}}",   "m²",        "\\si{\\square\\metre}",
+   "Radius of the Earth",       "R.Earth", 6371008.7714,           "IUGG, Wikipedia", "<i>R</i><sub>Earth</sub>", "\\ensuremath{R_\\text{Earth}}", "m",         "\\si{\\metre}",
+   "Surface area of the Earth", "A.Earth", NA,                     "A=4×π×R²",        "<i>A</i><sub>Earth</sub>", "\\ensuremath{A_\\text{Earth}}", "m²",        "\\si{\\square\\metre}")
+solarconstants <-
+   solarconstants %>%
+   # surface area of the Sun
+   mutate(value =
+      replace(
+         value,
+         label == "A.Sun",
+         4 * pi * (solarconstants %>% filter(label == "R.Sun") %>% pull(value))^2)) %>%
+   # surface area of the Earth
+   mutate(value =
+      replace(
+         value,
+         label == "A.Earth",
+         4 * pi * (solarconstants %>% filter(label == "R.Earth") %>% pull(value))^2))
+```
+
+An ideal absorber absorbs all incident radiation and is called a *black body*.
+By simple conservation of energy, such a black body must then have an *emissivity*
+of unity.
+Every object at a temperature above 0 K emits *and* absorbs electromagnetic radiation
+to some degree. The the spectral distribution of a black body depends *only*
+on its temperature.
+
+Stars are not ideal absorbers, but are to a very close approximation black bodies
+when considering their surface temperature.
+
+The *spectral radiance*^[*Irradiance* is the radiant power emitted by the black body,
+and *radiance* is the radiant power received by another object. That is how these
+terms are [usually defined in radiometry](https://en.wikipedia.org/wiki/Irradiance)
+and how we use them in this package.]
+of a black body (i.e, its emitted power per unit area and per unit wavelength)
+at thermal equilibrium is given by Planck's law^[Planck's law describes
+the spectral radiance, $I$, of electromagnetic radiation at all wavelengths
+emitted in the normal direction from a black body in a cavity in thermodynamic equilibrium.]:
+\begin{equation}
+I\left(\lambda, T\right) = \frac{2{\pi}hc^2}{\lambda^5}\frac{1}{\exp\left(\displaystyle\frac{hc}{{\lambda}kT}\right) - 1}
+\end{equation}
+where $h$ is Planck's constant, $c$ is the speed of light in vacuum, and $k$ is
+Boltzmann's constant (please see table below for details on these constants).
+To be rigorous, we may note that when referring to a black body the spectral radiance
+is considered independent of viewing angle (isotropic), independent of time, and
+independent of position on the emitting surface (spatially homogeneous).
+Notice that in Planck's law the first term (the fifth-power term) has units of
+W m⁻² nm⁻¹ (assuming wavelength was given in nm) and that the second term (the exponential term)
+is unitless.
+
+The amount of thermal radiation from a material can be determined by multiplying
+its spectral radiance and emissivity. For a black body the spectral radiance thus
+completely characterises its thermal output.
+This makes Planck's law very useful for modelling the solar radiance as well
+as the irradiance on Earth.
+
+```{r echo=FALSE, results="asis"}
+xtab.solarconstants <-
+   solarconstants |>
+   select(name, label.html, value, unit.html, reference) |>
+   xtable::xtable()
+names(xtab.solarconstants) <- c("Name", "Symbol", "Value", "Unit", "Reference")
+# remember, digits() display() align() are length + 1 (include row.names)
+digits(xtab.solarconstants) <- c(0, 0, 0, 4, 0, 0)
+display(xtab.solarconstants) <- c("s", "s", "s", "e", "s", "s")
+align(xtab.solarconstants) <- c("l", "l", "c", "r", "l", "l")
+print(
+   xtab.solarconstants,
+   include.rownames = FALSE,
+   # disabling sanitization is important to not mangle HTML markup inside the dataframe
+   sanitize.text.function = function(x){x},
+   type = "html")
+```
+
+
+
+
+It is perhaps instructive to start off by modelling not just the Sun but also
+a higher- and a lower-temperature star using Planck's law.
+
+```{r blackbody-different-temperatures}
+surface.temperature <- c(
+   # https://en.wikipedia.org/wiki/Gamma_Cassiopeiae # 25000, # K
+   # https://en.wikipedia.org/wiki/Sirius            # 9940, # K
+   # https://en.wikipedia.org/wiki/Vega              # 9602, # K
+   # https://en.wikipedia.org/wiki/Fomalhaut         # 8590, # K
+   # https://en.wikipedia.org/wiki/Deneb
+   8525,
+   # Sun
+   filter(solarconstants, label=="T.Sun")$value,
+   # https://en.wikipedia.org/wiki/Beta_Andromedae   # 3842, # K
+   # https://en.wikipedia.org/wiki/Betelgeuse
+   3600)
+bblong <- NULL
+for (i in 1:length(surface.temperature)) {
+   bblong <- bind_rows(
+      bblong,
+      sunlight.Planck(
+         wavelength = seq(spectral.min, spectral.max, spectral.stepsize),
+         temperature = surface.temperature[i]) %>%
+      # convert spectral radiance/irradiance columns from W m⁻² m⁻¹ to W m⁻² nm⁻¹
+      mutate(Sun.spectralradiance = 1e-9 * Sun.spectralradiance) %>%
+      mutate(Earth.spectralirradiance = 1e-9 * Earth.spectralirradiance) %>%
+      add_column(energy = photoec::wavelength2energy(.$wavelength), .after = "wavelength") %>%
+      add_column(temperature = surface.temperature[i], .after = "energy") %>%
+      pivot_longer(
+         cols = !starts_with(c("wavelength", "energy", "temperature")),
+         names_to = "property",
+         values_to = "value"))
+}
+```
+
+In the above chunk we used Planck's law as implemented by our `sunlight.Planck()`
+function to return spectral radiance as well as other derived quantities
+for three different absolute temperatures.
+
+
+```{r radiance-total-and-in-the-visible-range}
+# you want to be careful when extending the wavelength range towards larger values that
+# you don't use too large step sizes in the lower ranges, because that will mess up
+# the cumulative radiance values (due to trapezoidal integration)
+# NOTE that adding the two higher-wavelength ranges makes no discernible difference
+# to the calculated totals or visible range fractions
+wl.extended <- c(seq(1E-9, 2E-5, 1E-9), seq(3E-05, 1, 1E-4), seq(2, 1E6, 1E2))
+radiances <- NULL
+for (i in 1:length(surface.temperature)) {
+   radiances <- bind_rows(
+      radiances,
+      sunlight.Planck(
+         wavelength = wl.extended,
+         temperature = surface.temperature[i]) %>%
+      add_column(temperature = surface.temperature[i], .after = "wavelength") %>%
+      select(wavelength, temperature, Sun.radiance) %>%
+      rename(total = Sun.radiance) %>%
+      # find the total radiance (last value in vector, corresponds to largest wavelength)
+      group_by(temperature) %>%
+      slice_tail(n = 1)
+   )
+}
+# to avoid stupid errors due to temperatures possibly ordered differently, use join
+radiances <-
+   left_join(
+      radiances,
+      bblong %>%
+         group_by(temperature) %>%
+         filter(property == "Sun.radiance") %>%
+         # careful, this equals sign only works reliably if stepsize 1 nm
+         filter(wavelength == vis.min) %>%
+         # slice unnecessary if preceding comparison uses ==, but needed if we use > or <
+         slice_head(n = 1) %>%
+         select(temperature, value) %>%
+         # dynamically construct new column name using glue notation
+         # https://stackoverflow.com/a/67644830/1198249
+         rename("at{vis.min}" := value),
+      by = "temperature") %>%
+   left_join(
+      bblong %>%
+         group_by(temperature) %>%
+         filter(property == "Sun.radiance") %>%
+         filter(wavelength == vis.max) %>%
+         slice_head(n = 1) %>%
+         select(temperature, value) %>%
+         rename("at{vis.max}" := value),
+      by = "temperature")
+# radiance in the visible range
+# note the use of drop=TRUE to force return of vector and not tibble, which is otherwise the default
+# https://tibble.tidyverse.org/reference/subsetting.html
+radiances$visible <- radiances[, paste0("at", vis.max), drop=T] - radiances[, paste0("at", vis.min), drop=T]
+# fraction of radiance in the visible range compared to total radiance
+radiances$fraction <- radiances$visible / radiances$total
+```
+
+
+```{r blackbody-radiance, echo=FALSE}
+this.labeller <- setNames(
+   # note that knitr device=svg throws lot of warnings when we used unicode
+   # char (no-break space) instead of regular space character here
+   # https://github.com/yihui/knitr/issues/496
+   paste0(unique(bblong$temperature), " K"),
+   unique(bblong$temperature))
+p.bb.spradiance <- ggplot(bblong %>% filter(property == "Sun.spectralradiance")) +
+   facet_wrap(
+      ~temperature, ncol = 1, scales = "free_y",
+      labeller = as_labeller(this.labeller)) +
+   # highlight visible spectrum range as area
+   # would be really cool if we could colour this area as a rainbow...
+   geom_ribbon(
+      data = bblong %>%
+         filter(property == "Sun.spectralradiance") %>%
+         filter(wavelength >= vis.min & wavelength <= vis.max),
+      fill = alpha("orange", 0.35),
+      colour = NA,
+      ymin = 0,
+      aes(x = wavelength, ymax = value)) +
+   geom_path(
+      aes(
+         x = wavelength,
+         y = value)) +
+   geom_text(
+      data = radiances,
+      x = mean(range(vis.min, vis.max)),
+      # Y=Inf in combination with hjust=1 (note the angle) aligns the right-edge of the text
+      # with top of plot area. hjust > 1 pushes the text downwards (also affected by textsize).
+      y = Inf, hjust = 2.65, size = 3.25,
+      # note that due to angle=90 here vjust affects horizontal positioning
+      vjust = 0.5, angle = 90,
+      colour = "#b36200", # dark orange
+      aes(
+         label = paste0(formatC(100 * fraction, digits=2), "%"),
+         group = temperature)) +
+   geom_label_repel(
+      data = . %>% group_by(temperature) %>% filter(max(value) == value),
+      size = 3.0, nudge_x = 1e-6,
+      point.padding = unit(0.75, "lines"),
+      arrow = arrow(length = unit(0.05, "npc")),
+      aes(
+         label = paste0(numbers2prefix(wavelength), "m"),
+         x = wavelength,
+         y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Spectral radiance / kW m⁻² nm⁻¹",
+      labels = rlang::as_function(~ 1e-3 * .)) +
+   theme(
+      legend.position = c(1, 1),
+      legend.justification = c(1, 1))
+p.bb.radiance <- ggplot(bblong %>% filter(property == "Sun.radiance")) +
+   facet_wrap(
+      ~temperature, ncol = 1, scales = "free_y",
+      labeller = as_labeller(this.labeller)) +
+   geom_ribbon(
+      data = bblong %>%
+         filter(property == "Sun.radiance") %>%
+         filter(wavelength >= vis.min & wavelength <= vis.max),
+      fill = alpha("orange", 0.35),
+      colour = NA,
+      ymin = 0,
+      aes(x = wavelength, ymax = value)) +
+   geom_path(
+      aes(
+         x = wavelength,
+         y = value)) +
+   geom_text(
+      data = radiances,
+      x = Inf, y = Inf,
+      vjust = 2.25, hjust = 1.2, size = 3.25,
+      aes(
+         label = paste0(formatC(1E-6 * total, format="f", digits = 1), " MW m⁻²"),
+         group = temperature)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Radiance / MW m⁻²",
+      labels = rlang::as_function(~ 1e-6 * .)) +
+   theme(legend.position = "none")
+title.cow <- ggdraw() +
+   draw_label(
+      "Black body spectra at three different temperatures",
+      x = 0, hjust = 0, size = 14) +
+   # manually adjusted title left-side margin to align with left plot panel
+   theme(plot.margin = margin(0, 0, 0, 40))
+subtitle.cow <- ggdraw() +
+   draw_label(
+      "Exemplified with Betelgeuse, the Sun, and Deneb. Visible range demarcated in yellow.",
+      x = 0, hjust = 0, y = 1, size = 10) +
+   # manually adjusted title left-side margin to align with left plot panel
+   theme(plot.margin = margin(0, 0, 0, 40))
+bb.row <- cowplot::plot_grid(p.bb.spradiance, p.bb.radiance, nrow = 1, rel_widths = c(1, 1))
+cowplot::plot_grid(title.cow, subtitle.cow, bb.row, ncol = 1, rel_heights = c(0.1, 0.04, 1))
+```
+Visible range (`r numbers2prefix(vis.min)`m–`r numbers2prefix(vis.max)`m) shown as
+a yellow area under both the spectral radiance and radiance curves, on the former
+overlaid with the ratio of radiance in the visible range to the total radiance.
+In the right-hand panels the *total* radiance (calculated by integrating spectral radiances over the
+wavelength range `r numbers2prefix(min(wl.extended))`m–`r numbers2prefix(max(wl.extended), digits = 4)`m)
+is also shown.
+
+The shape of the spectral radiance curve (Planck's law) is only dependent on the
+temperature of the black body. The position of the peak of the spectral radiance
+shifts depending on the temperature (towards lower wavelengths for higher temperatures).
+The wavelength of the spectral radiance's maximimum can be deduced from the
+curve itself (i.e., Planck's law), or else from the so-called Wien displacement law,
+which is just another way to express the same thing:
+\begin{equation}
+\lambda_\mathrm{peak} = \frac{b}{T}
+\end{equation}
+where $T$ is the absolute temperature and $b$ is a proportionality constant
+ultimately derived from Planck's law:
+\begin{equation}
+b = \frac{hc}{xk} \approx 2.89777\ldots\cdot10^{-3} \mathrm{m~K}
+\end{equation}
+where $h$ is Planck's constant, $c$ is the speed of light, $k$ is Boltzmann's constant,
+and $x$ is a purely mathematical constant.^[$x$ is the positive solution to
+$x = 5(1 - \exp(-x))$, which is solved by
+$x = 5 + W(-5\exp(-5))$, where $W()$ is the Lambert W-function,
+and gives $x = 4.965114231744276\ldots$.
+<!-- https://en.wikipedia.org/w/index.php?title=Wien%27s_displacement_law&oldid=1161250340#Parameterization_by_wavelength -->
+But I must admit I don't know what the W-function is. Some function to wrangle this
+sort of exponential equation, I suppose.]
+Note that as parametrised here, the unit of $b$ is m K (that's metre Kelvin) and nothing else.
+
+
+```{r Sun-blackbody-df-long, results="markup"}
+dflong <- sunlight.Planck(wavelength = wl.extended) %>%
+   # convert spectral radiance/irradiance columns from W m⁻² m⁻¹ to W m⁻² nm⁻¹
+   mutate(Sun.spectralradiance = 1e-9 * Sun.spectralradiance) %>%
+   mutate(Earth.spectralirradiance = 1e-9 * Earth.spectralirradiance) %>%
+   # the use of .$ notation was necessary here (because inside function call, I guess)
+   add_column(energy = photoec::wavelength2energy(.$wavelength), .after = "wavelength") %>%
+   # transform dataframe to long format (better suited for tidy and gpplot2)
+   pivot_longer(
+      cols = !starts_with(c("wavelength", "energy")),
+      names_to = "property",
+      values_to = "value")
+dflong %>% glimpse()
+```
+
+
+
+```{r Sun-blackbody-spectrum-radiance, echo=FALSE}
+# using facetting is not suitable because we have different y-axis for every plot...
+p.sun.spradiance <-
+   ggplot(dflong %>%
+             filter(property == "Sun.spectralradiance") %>%
+             filter(wavelength >= spectral.min & wavelength <= spectral.max)) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Sp. radiance / kW m⁻² nm⁻¹",
+      labels = rlang::as_function(~ 1e-3 * .)) +
+   theme(legend.position = "none")
+p.sun.radiance <-
+   ggplot(dflong %>%
+             filter(property == "Sun.radiance") %>%
+             filter(wavelength >= spectral.min & wavelength <= spectral.max)) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value)) +
+   geom_text(
+      # cannot use . here, must be explicit, otherwise we get the data truncated
+      # at vis.max whereas we want the radiance for the extended spectral range
+      data = dflong %>%
+         filter(property == "Sun.radiance") %>%
+         slice_tail(n = 1),
+      x = Inf, y = Inf,
+      vjust = 2.50, hjust = 1.2, size = 3.25,
+      aes(label = paste0(formatC(1E-6 * value, format = "f", digits = 1), " MW m⁻²"))) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Radiance / MW m⁻²",
+      labels = rlang::as_function(~ 1e-6 * .)) +
+   theme(legend.position = "none")
+p.sun.luminosity <-
+   ggplot(dflong %>%
+             filter(property == "Sun.luminosity") %>%
+             filter(wavelength >= spectral.min & wavelength <= spectral.max)) +
+   geom_line(aes(x = wavelength, y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(name = "Luminosity/W") +
+   theme(legend.position = "none")
+##
+p.earth.spirr <-
+   ggplot(dflong %>%
+             filter(property == "Earth.spectralirradiance") %>%
+             filter(wavelength >= spectral.min & wavelength <= spectral.max)) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(name = "Sp. irradiance / W m⁻² nm⁻¹") +
+   theme(legend.position = "none")
+p.earth.irr <-
+   ggplot(dflong %>%
+             filter(property == "Earth.irradiance") %>%
+             filter(wavelength >= spectral.min & wavelength <= spectral.max)) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value)) +
+   geom_text(
+      # cannot use . here, must be explicit, otherwise we get the data truncated
+      # at vis.max whereas we want the irradiance for the extended spectral range
+      data = dflong %>%
+         filter(property == "Earth.irradiance") %>%
+         slice_tail(n = 1),
+      x = Inf, y = Inf,
+      vjust = 2.50, hjust = 1.2, size = 3.25,
+      aes(label = paste0(formatC(value, format = "f", digits = 1), " W m⁻²"))) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Irradiance / kW m⁻²",
+      labels = rlang::as_function(~ 1e-3 * .)) +
+   theme(legend.position = "none")
+p.earth.luminosity <-
+   ggplot(dflong %>%
+             filter(property == "Earth.luminosity") %>%
+             filter(wavelength >= spectral.min & wavelength <= spectral.max)) +
+   geom_line(aes(x = wavelength, y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(name = "Luminosity/W") +
+   theme(legend.position = "none")
+# https://datavizpyr.com/join-multiple-plots-with-cowplot/
+title.cow <- ggdraw() +
+   draw_label(
+      paste0(
+         "Spectrum of the Sun modelled as a black body (",
+         paste0(1e9 * spectral.min, " nm"),
+         # en dash
+         "–",
+         paste0(1e6 * spectral.max, " µm"),
+         ")"),
+      x = 0, hjust = 0, size = 14) +
+   # manually adjusted title left-side margin to align with left plot panel
+   theme(plot.margin = margin(0, 0, 0, 45))
+title.sun <- ggdraw() + draw_label("Solar radiance", angle=-90, x=0.5, y=0, hjust=1.65, vjust=0.5, size=12)
+# hjust adjust up/down position of right-side labels and was adjusted manually
+title.earth <- ggdraw() + draw_label("Irradiance on Earth", angle=-90, x=0.5, y=0, hjust=1.37, vjust=0.5, size=12)
+row.sun <- cowplot::plot_grid(p.sun.spradiance, p.sun.radiance, title.sun, nrow = 1, rel_widths = c(1, 1, 0.1), labels = c("a", "b"), label_x = 0.16, label_y = 0.97)
+row.earth <- cowplot::plot_grid(p.earth.spirr, p.earth.irr, title.earth, nrow = 1, rel_widths = c(1, 1, 0.1), labels = c("c", "d"), label_x = 0.16, label_y = 0.97)
+cowplot::plot_grid(title.cow, row.sun, row.earth, ncol = 1, rel_heights = c(0.1, 1, 1))
+```
+Figure above shows the spectral radiance and radiance of the Sun
+and the spectral irradiance and radiance at Earth's surface
+(note that at this level of abstraction the thickness of
+the atmosphere is all but irrelevant).
+Note that just as earlier the displayed *total* radiance values (in the right-hand panels)
+are based on the extended wavelength range
+`r numbers2prefix(min(wl.extended))`m–`r numbers2prefix(max(wl.extended), digits = 4)`m.^[By
+taking a wider wavelength range into account we get a better approximation of the total radiance.
+For example calculating the total irradiance on Earth when limited to the plotted wavelength range
+yields a value of
+`r dflong %>% filter(property == "Earth.irradiance") %>% filter(wavelength >= spectral.min & wavelength <= spectral.max) %>% slice_tail(n=1) %>% pull(value) %>% formatC(digits=1, format="f")` W m⁻².]
+
+Let's take a closer look at the two terms in Planck's law, i.e., the power term
+and the exponential term.
+Both terms vary with many orders of magnitude over the solar spectral range which
+makes them awkward to plot, so instead  we will look at their values at the spectral
+range extremes.
+
+The power-term goes from
+`r bblong %>% filter(property == "Sun.spectralradiance.powerterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_head(n=1) %>% pull(value) %>% numbers2prefix()`W m⁻² nm⁻¹
+at
+`r bblong %>% filter(property == "Sun.spectralradiance.powerterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_head(n=1) %>% pull(wavelength) %>% numbers2prefix()`m
+to
+`r bblong %>% filter(property == "Sun.spectralradiance.powerterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_tail(n=1) %>% pull(value) %>% numbers2prefix()`W m⁻² nm⁻¹
+at
+`r bblong %>% filter(property == "Sun.spectralradiance.powerterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_tail(n=1) %>% pull(wavelength) %>% numbers2prefix()`m,
+i.e., a difference of eight orders of magnitude.
+Notice how it goes from extremely large values at low wavelength to very large values
+at long wavelengths. But it does continue dropping (as power laws do, asymptotically towards
+zero) so that by a wavelength of 1 m it is 1e-16 W m⁻² nm⁻¹ and four orders of magnitude later
+(i.e, at a wavelength of 10 km) it is 1e-36 W m⁻² nm⁻¹ (20 orders of magnitude smaller).
+```{r results="markup"}
+dflong %>% filter(property == "Sun.spectralradiance.powerterm") %>% head()
+dflong %>% filter(property == "Sun.spectralradiance.powerterm") %>% tail()
+```
+
+The exponential term goes from
+`r bblong %>% filter(property == "Sun.spectralradiance.expterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_head(n=1) %>% pull(value) %>% numbers2prefix()`W m⁻² nm⁻¹
+at
+`r bblong %>% filter(property == "Sun.spectralradiance.expterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_head(n=1) %>% pull(wavelength) %>% numbers2prefix()`m
+to
+`r bblong %>% filter(property == "Sun.spectralradiance.expterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_tail(n=1) %>% pull(value) %>% numbers2prefix()`W m⁻² nm⁻¹
+at
+`r bblong %>% filter(property == "Sun.spectralradiance.expterm") %>% filter(temperature == filter(solarconstants, label == "T.Sun")$value) %>% slice_tail(n=1) %>% pull(wavelength) %>% numbers2prefix()`m,
+i.e., a difference of 11 orders of magnitude.
+```{r results="markup"}
+dflong %>% filter(property == "Sun.spectralradiance.expterm") %>% head()
+dflong %>% filter(property == "Sun.spectralradiance.expterm") %>% tail()
+```
+
+From the above results we can see that the powerterm drops much faster than the exponential
+rises, giving us the spectral radiance curve that slowly drops to almost zero at high wavelengths.
+And despite the powerterm growing towards lower wavelengths, it is still outmatched
+by the much stronger drop in the exponential (which in fact goes to zero), giving
+the spectral radiance curve that drops quickly towards zero at the lowest wavelengths.
+
+In fact, the spectral radiance goes above 1e-30 W m⁻² nm⁻¹ only by a wavelength of 25 nm,
+and above 1 µW m⁻² nm⁻¹ only at wavelengths above 62 nm.
+As we saw the slope is less extreme towards higher wavelengths.
+By 530 µm the spectral radiance has dropped to the microwatt level again, but does not
+drop to around 1e-30 W m⁻² nm⁻¹ until a wavelength of around 400 m (yes, that's meters).
+
+So based purely on Planck's law, in order to estimate the Sun's black body total
+radiant power to a high degree of accuracy, we should use a wavelength range from
+at least 25 nm to 400 m.
+Note that for estimating total radiant power not only the spectral radiance,
+but also the spectral flux matters. That is, despite high-energy gamma rays being
+extremely energetic (wavelengths down to $10^{-17}$ nm or
+`r common::numbers2prefix(photoec::wavelength2energy(1e-17))`eV which is beyond
+even our most powerful particle accelerators, I believe) the *amount* of such
+photons is effectively zero, as we saw above.
+Note that the total radiant power values given in the plots above integrated
+radiance over an even wider wavelength range,
+`r numbers2prefix(min(wl.extended))`m–`r numbers2prefix(max(wl.extended), digits = 4)`m.
+
+```{r two-terms-Plancks-law, eval=FALSE, echo=FALSE}
+# 3.74e19 W m⁻² nm⁻¹ at 1 nm, drops to 3.654e11 at 4000 nm (8 orders of magnitude)
+p <- ggplot(data = bblong %>%
+          filter(property == "Sun.spectralradiance.powerterm") %>%
+          filter(temperature == filter(solarconstants, label == "T.Sun")$value)) +
+   coord_cartesian(y = c(0, 1e13)) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Spectral radiance / W m⁻² nm⁻¹") +
+   #    labels = rlang::as_function(~ 1e-6 * .)) +
+   theme(legend.position = "none")
+# 1.49e-11 W m⁻² nm⁻¹ at 1 nm, rises to 1.16 at 4000 nm (11 orders of magnitude)
+ggplot(data = bblong %>%
+          filter(property == "Sun.spectralradiance.expterm") %>%
+          filter(temperature == filter(solarconstants, label == "T.Sun")$value)) +
+   # coord_cartesian(y = c(0, 1e13)) +
+   geom_line(
+      aes(
+         x = wavelength,
+         y = value)) +
+   scale_x_continuous(
+      name = "Wavelength / nm",
+      labels = rlang::as_function(~ 1e9 * .)) +
+   scale_y_continuous(
+      name = "Spectral radiance / W m⁻² nm⁻¹",
+      sec.axis = dup_axis()) +
+   #    labels = rlang::as_function(~ 1e-6 * .)) +
+   theme(legend.position = "none")
+```
+
+We should perhaps mention how we calculate the irradiance on Earth from the solar
+radiance values. The distance between the Earth and the Sun varies over the year,
+but for our purposes the astronomical unit has sufficient precision.
+We assume the solar radiance (power per unit area) is spread evenly across the entire
+surface of the Sun (isotropic radiation), and since the Earth radius is tiny compared
+to the Sun *and* the distance between them is huge only a miniscule fraction of the
+solar radiance can impinge on the planet.
+We can calculate this fraction by a little geometry: consider two spheres centered on
+the Sun, one with a radius equal to the Sun, and the other with a radius of Earth's
+orbit (i.e., 1 AU). The fraction we seek (or in other words an attenuation factor) is
+the squared quotient of the inner sphere's radius to the outer sphere's radius,
+$R_\mathrm{Sun}/R_\mathrm{Earth}$ =
+`r (filter(photoec::solarconstants, label=="R.Sun")$value / filter(photoec::solarconstants, label=="R.AU")$value)^2 %>% formatC(format="e", digits=2)`.
+You may have already noticed that this geometric argument is just another way to express
+the inverse square law:
+\begin{equation}
+I_\mathrm{Earth} = I_\mathrm{Sun} \frac{4\pi R_\mathrm{Sun}^2}{4\pi R_\mathrm{Earth}^2} =
+I_\mathrm{Sun} \left(\frac{R_\mathrm{Sun}}{R_\mathrm{Earth}}\right)^2
+\end{equation}
+
+
+## Sources
+
++ Nilsson, A.M., 2012. Daylighting systems: development of techniques for optical
+  characterization and performance evaluation (PhD thesis). Uppsala university, Uppsala.
++ Bayrak Pehlivan, I., 2013. Functionalization of polymer electrolytes for
+  electrochromic windows (PhD thesis). Uppsala university, Uppsala.
++ Meyers, R.A. (ed.), 2012. Encyclopedia of sustainability science and technology.
+  Springer-Verlag, New York. https://doi.org/10.1007/978-1-4419-0851-3
+  Note that this encyclopedia is over 12000 pages.
+  Specifically, see the following entries
+  [Solar irradiance, global distribution](https://doi.org/10.1007/978-1-4419-0851-3_447),
+  [Solar radiation spectrum](https://doi.org/10.1007/978-1-4419-0851-3_445),
+  [Solar radiation for solar energy utilization](https://doi.org/10.1007/978-1-4419-0851-3_450).
++ https://en.wikipedia.org/w/index.php?title=Wien%27s_displacement_law&oldid=1161250340
++ https://oeis.org/A094090
++ https://oeis.org/A081819
++ https://physics.nist.gov/cgi-bin/cuu/Value?bwien
++ https://earthobservatory.nasa.gov/features/EnergyBalance,
+  [archivebox](https://archivebox.chepec.se/archive/1688415811.772509/index.html)
++ https://en.wikipedia.org/w/index.php?title=Solar_irradiance&oldid=1162771845
++ https://www.energy.gov/eere/solar/solar-radiation-basics,
+  [archivebox](https://archivebox.chepec.se/archive/1688415811.772284/index.html)
++ https://solcast.com

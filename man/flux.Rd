@@ -15,5 +15,5 @@ flux(wavelength, model = "AM1.5G")
 Vector with flux values at the given wavelength values.
 }
 \description{
-DEPRECATED. Please use \link{sunlight.ASTM()} instead.
+DEPRECATED. Please use \code{\link{sunlight.ASTM}} instead.
 }

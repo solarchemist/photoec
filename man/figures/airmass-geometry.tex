@@ -1,0 +1,59 @@
+% latexmk -pdf airmass-geometry.tex
+% convert -density 300 airmass-geometry.pdf -resize 50% -alpha remove -alpha off airmass-geometry.png
+\documentclass[preview]{standalone}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{%
+   arrows,%
+   arrows.meta,%
+   decorations,%
+   decorations.pathreplacing%
+}
+\usepackage{siunitx}
+
+\begin{document}
+\definecolor{amseagreen}{HTML}{2E8B57}
+\definecolor{uranianblue}{HTML}{AFDBF5}
+\tikzstyle{horizon} = [%
+   % https://texample.net/tikz/examples/oblique-incidence
+   postaction={draw,decorate,decoration={border,angle=-45,amplitude=0.3cm,segment length=1mm}}]
+% demonstrating the projection effect
+\begin{tikzpicture}[inner sep=0pt,outer sep=0pt,font=\scriptsize]
+   % atmosphere
+   \fill[draw=none, fill=uranianblue, opacity=0.20] (0, 0) rectangle +(4.5, 2.2);
+
+   % to get the exact same distance between two lines, let's define two identical rectangles
+   \begin{scope} % AM1
+      % clip to hide short ends both at horizon and up top
+      \clip (0, 0) rectangle (1.2, 2.95);
+      \node[rectangle, draw=orange, thick, anchor=south west, minimum width=21pt, minimum height=3cm] (AM1) at (0.2, 0) {};
+      \node[anchor=south,yshift=0.2cm,font=\sffamily\scriptsize] (labelAM1) at (AM1.south) {AM1};
+   \end{scope}
+
+   \begin{scope} % AM1.5
+      % clip to only show the part of this rectangle above the horizon line
+      \clip (0, 0) rectangle (4.5, 3);
+      \node[rectangle, draw=orange, thick, anchor=south west, rotate=-48.2, minimum width=21pt, minimum height=4.5cm] (AM15) at (1.4, 0) {};
+      % by tying this label to the AM1 label they get exactly the same height, but x-position is eye-balled
+      \node[anchor=west,xshift=1.05cm,font=\sffamily\scriptsize] at (labelAM1.east) {AM1.5};
+   \end{scope}
+
+   % to get the ground shadow effect, let's redraw the same rectangles, but filled, and
+   % clip out everything except a sliver along the horizon
+   \begin{scope}
+      \clip (0, 0) rectangle (4.5, 2pt);
+      \node[rectangle, fill=orange, opacity=0.33, draw=orange, thick, anchor=south west, minimum width=21pt, minimum height=3cm] (shadow0) at (0.2, 0) {};
+      \node[rectangle, fill=orange, opacity=0.33, draw=orange, thick, anchor=south west, rotate=-48.2, minimum width=21pt, minimum height=4.5cm] (shadow15) at (1.4, 0) {};
+   \end{scope}
+
+   % horizon
+   \draw[amseagreen, line width=.5pt, horizon] (0, 0) -- (4.5, 0);
+
+   \node[anchor=center,font=\scriptsize] (distanceAM1) at (AM1.center) {$d$};
+   \draw[->] (distanceAM1) -- (AM1.east);
+   \draw[<-] (AM1.west) -- (distanceAM1);
+   \node[anchor=center,font=\scriptsize] (distanceAM15) at (AM15.center) {$d$};
+   \draw[->] (distanceAM15) -- (AM15.east);
+   \draw[<-] (AM15.west) -- (distanceAM15);
+\end{tikzpicture}
+\end{document}
